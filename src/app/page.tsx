@@ -1,9 +1,29 @@
+
 import { FeaturedProperties } from '@/components/properties/FeaturedProperties';
 import { PropertySearchBar } from '@/components/search/PropertySearchBar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ShieldCheck, Users, Camera } from 'lucide-react';
 
 export default function HomePage() {
+  const benefits = [
+    {
+      icon: <ShieldCheck className="w-12 h-12 text-accent mb-4" />,
+      title: 'Verified Listings',
+      description: 'Every property is carefully vetted to ensure accuracy and reliability, giving you peace of mind.',
+    },
+    {
+      icon: <Users className="w-12 h-12 text-accent mb-4" />,
+      title: 'Direct Agent Support',
+      description: 'Connect directly with knowledgeable agents ready to assist you at every step of your property journey.',
+    },
+    {
+      icon: <Camera className="w-12 h-12 text-accent mb-4" />,
+      title: 'High-Quality Media',
+      description: 'Explore properties through stunning photos and detailed virtual tours, bringing them to life.',
+    },
+  ];
+
   return (
     <>
       {/* Hero Section */}
@@ -32,6 +52,24 @@ export default function HomePage() {
       </section>
 
       <FeaturedProperties />
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 md:py-20 bg-background">
+        <div className="container mx-auto px-4 md:px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-primary">
+            Why Choose Cameroon Estates Discovery?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+            {benefits.map((benefit) => (
+              <div key={benefit.title} className="flex flex-col items-center text-center p-6 bg-card rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                {benefit.icon}
+                <h3 className="text-xl font-semibold text-primary mb-2">{benefit.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Call to Action Section - Optional */}
       <section className="py-16 bg-secondary/50">
