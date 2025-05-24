@@ -30,6 +30,18 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
   const displayPrice = clientFormattedPrice || `${property.price} ${property.currency}`; 
 
+  const getPriceSuffix = () => {
+    if (property.listingType === 'rent') {
+      if (property.type === 'house' || property.type === 'land') {
+        return '/month';
+      }
+      if (property.type === 'guesthouse' || property.type === 'hotel') {
+        return '/night';
+      }
+    }
+    return '';
+  };
+
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
       <CardHeader className="p-0 relative">
@@ -40,11 +52,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             width={400}
             height={250}
             className="w-full h-48 sm:h-52 md:h-60 object-cover"
-            priority={false} // Only first few images on page load should be priority
+            priority={false}
             data-ai-hint={property.images[0].hint || 'property exterior'}
           />
         </Link>
-        <Badge variant="secondary" className="absolute top-2 right-2 capitalize text-xs px-1.5 py-0.5 sm:text-sm sm:px-2.5 sm:py-0.5">{property.type}</Badge>
+        <Badge variant="secondary" className="absolute top-2 right-2 capitalize text-xs px-1.5 py-0.5 sm:text-sm sm:px-2.5 sm:py-0.5">{property.listingType === 'rent' ? `${property.type} for Rent` : property.type}</Badge>
       </CardHeader>
       <CardContent className="p-3 sm:p-4 flex-grow">
         <CardTitle className="text-md sm:text-lg mb-1">
@@ -81,7 +93,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
       <CardFooter className="p-3 sm:p-4 flex justify-between items-center border-t">
         <p className="text-md sm:text-lg font-semibold text-primary flex items-center">
            <Tag className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> {displayPrice}
-           { (property.type === 'guesthouse' || property.type === 'hotel') && <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">/night</span>}
+           {getPriceSuffix() && <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">{getPriceSuffix()}</span>}
         </p>
         <Button asChild size="sm" variant="default" className="text-xs sm:text-sm px-2 sm:px-3">
           <Link href={`/properties/${property.id}`}>View Details</Link>
@@ -90,3 +102,4 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </Card>
   );
 }
+

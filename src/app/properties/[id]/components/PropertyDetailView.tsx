@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Tag, BedDouble, Bath, Maximize, LandPlot, Building, Home, Users, CalendarDays } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import Image from 'next/image'; // Added for map placeholder
+import Image from 'next/image';
 
 type PropertyDetailViewProps = {
   property: Property;
@@ -44,6 +44,18 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
 
   const displayPrice = clientFormattedPrice || `${property.price} ${property.currency}`; 
 
+  const getPriceSuffix = () => {
+    if (property.listingType === 'rent') {
+      if (property.type === 'house' || property.type === 'land') {
+        return '/month';
+      }
+      if (property.type === 'guesthouse' || property.type === 'hotel') {
+        return '/night';
+      }
+    }
+    return '';
+  };
+
   return (
     <>
       <div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
@@ -51,7 +63,9 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
           <PropertyImageGallery images={property.images} propertyName={property.name} />
         </div>
         <div className="space-y-4 sm:space-y-6">
-          <Badge variant="secondary" className="capitalize text-xs sm:text-sm py-1 px-2 sm:px-3">{property.type}</Badge>
+          <Badge variant="secondary" className="capitalize text-xs sm:text-sm py-1 px-2 sm:px-3">
+            {property.listingType === 'rent' ? `${property.type} for Rent` : property.type}
+          </Badge>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">{property.name}</h1>
           
           <div className="flex items-center text-muted-foreground text-sm sm:text-base">
@@ -62,7 +76,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
           <div className="text-2xl sm:text-3xl font-bold text-accent flex items-center">
             <Tag className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
             {displayPrice}
-            {(property.type === 'guesthouse' || property.type === 'hotel') && <span className="text-sm sm:text-base text-muted-foreground ml-2">/night</span>}
+            {getPriceSuffix() && <span className="text-sm sm:text-base text-muted-foreground ml-2">{getPriceSuffix()}</span>}
           </div>
           
           <Button 
@@ -169,3 +183,4 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
     </>
   );
 }
+

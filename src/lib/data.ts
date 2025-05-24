@@ -1,11 +1,12 @@
 
-import type { Property, BookingRequest, PropertyType, PropertyLocation, AppointmentType, PaymentMethod } from './types';
+import type { Property, BookingRequest, PropertyType, PropertyLocation, ListingType, AppointmentType, PaymentMethod } from './types';
 
 const mockProperties: Property[] = [
   {
     id: '1',
     name: 'Spacious Villa in Buea',
     type: 'house',
+    listingType: 'sale',
     location: 'Buea',
     price: 75000000,
     currency: 'XAF',
@@ -27,6 +28,7 @@ const mockProperties: Property[] = [
     id: '2',
     name: 'Prime Land in Limbe',
     type: 'land',
+    listingType: 'sale',
     location: 'Limbe',
     price: 25000000,
     currency: 'XAF',
@@ -45,9 +47,10 @@ const mockProperties: Property[] = [
     id: '3',
     name: 'Cozy Guesthouse in Douala',
     type: 'guesthouse',
+    listingType: 'rent', // Guesthouses are effectively for rent (per night)
     location: 'Douala',
-    price: 15000,
-    currency: 'XAF', // Per night
+    price: 15000, // Per night
+    currency: 'XAF',
     description: 'A charming and cozy guesthouse in the heart of Douala, perfect for travelers. Offers comfortable rooms and a friendly atmosphere.',
     address: '789 City Center St, Douala',
     bedrooms: 10, // Number of rooms
@@ -62,9 +65,10 @@ const mockProperties: Property[] = [
     id: '4',
     name: 'Luxury Hotel Suite, Douala',
     type: 'hotel',
+    listingType: 'rent', // Hotels are effectively for rent (per night)
     location: 'Douala',
-    price: 120000,
-    currency: 'XAF', // Per night
+    price: 120000, // Per night
+    currency: 'XAF', 
     description: 'Experience luxury in this exquisite hotel suite in Douala. Top-notch amenities, city views, and impeccable service.',
     address: '101 Business District, Douala',
     bedrooms: 1, // Suite
@@ -79,12 +83,13 @@ const mockProperties: Property[] = [
   },
   {
     id: '5',
-    name: 'Affordable House in Limbe',
+    name: 'Affordable House for Rent in Limbe',
     type: 'house',
+    listingType: 'rent',
     location: 'Limbe',
-    price: 35000000,
+    price: 350000, // Price per month
     currency: 'XAF',
-    description: 'A well-maintained and affordable house in a quiet neighborhood of Limbe. Ideal for families.',
+    description: 'A well-maintained and affordable house for rent in a quiet neighborhood of Limbe. Ideal for families. Price is per month.',
     address: '22 Peace Valley, Limbe',
     bedrooms: 3,
     bathrooms: 2,
@@ -100,6 +105,7 @@ const mockProperties: Property[] = [
     id: '6',
     name: 'Commercial Land in Douala',
     type: 'land',
+    listingType: 'sale',
     location: 'Douala',
     price: 150000000,
     currency: 'XAF',
@@ -113,10 +119,32 @@ const mockProperties: Property[] = [
     isFeatured: false,
     agent: { name: 'Alpha Investments', phone: '+237670000006', email: 'invest@alpha.com' },
   },
+  {
+    id: '7',
+    name: 'Modern Apartment for Rent, Buea',
+    type: 'house', // Using 'house' type for apartments for simplicity in this model
+    listingType: 'rent',
+    location: 'Buea',
+    price: 250000, // Price per month
+    currency: 'XAF',
+    description: 'Stylish 2-bedroom apartment for rent in a central Buea location. Features contemporary design and access to shared amenities.',
+    address: 'Apartment 5B, Modern Living Complex, Buea',
+    bedrooms: 2,
+    bathrooms: 1,
+    areaSqMeters: 90,
+    amenities: ['WiFi', 'Parking', 'Security', 'Balcony'],
+    images: [
+      { url: 'https://placehold.co/800x600.png', alt: 'Apartment building exterior', hint: 'modern apartment' },
+      { url: 'https://placehold.co/800x600.png', alt: 'Apartment interior', hint: 'stylish apartment' },
+    ],
+    isFeatured: true,
+    agent: { name: 'Buea Rentals Co.', phone: '+237670000007', email: 'rentals@bueaproperties.com' },
+  },
 ];
 
 export async function getProperties(filters?: {
   type?: PropertyType | 'all';
+  listingType?: ListingType | 'all';
   location?: PropertyLocation | 'all';
   searchTerm?: string;
   minPrice?: number;
@@ -130,6 +158,9 @@ export async function getProperties(filters?: {
   if (filters) {
     if (filters.type && filters.type !== 'all') {
       filteredProperties = filteredProperties.filter(p => p.type === filters.type);
+    }
+    if (filters.listingType && filters.listingType !== 'all') {
+      filteredProperties = filteredProperties.filter(p => p.listingType === filters.listingType);
     }
     if (filters.location && filters.location !== 'all') {
       filteredProperties = filteredProperties.filter(p => p.location === filters.location);
@@ -182,3 +213,4 @@ export async function submitBookingRequest(bookingData: SubmitBookingRequestData
   // In a real app, this would write to Firestore.
   return fullBookingData.id;
 }
+

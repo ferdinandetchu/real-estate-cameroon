@@ -1,6 +1,6 @@
 
 import { getProperties } from '@/lib/data';
-import type { PropertyType, PropertyLocation } from '@/lib/types';
+import type { PropertyType, PropertyLocation, ListingType } from '@/lib/types';
 import { PropertyList } from '@/components/properties/PropertyList';
 import { PropertySearchBar } from '@/components/search/PropertySearchBar';
 import type { SuspenseProps } from 'react'; // For potential Suspense usage
@@ -9,6 +9,7 @@ import type { SuspenseProps } from 'react'; // For potential Suspense usage
 interface PropertiesPageSearchParams {
   q?: string;
   type?: PropertyType | 'all';
+  listingType?: ListingType | 'all'; // Added listingType
   location?: PropertyLocation | 'all';
   minPrice?: string;
   maxPrice?: string;
@@ -26,6 +27,7 @@ function getValidatedSearchParam<T extends string>(value: string | undefined, al
 export default async function PropertiesPage({ searchParams }: { searchParams: PropertiesPageSearchParams }) {
   const searchTerm = searchParams.q || '';
   const type = searchParams.type || 'all';
+  const listingType = searchParams.listingType || 'all'; // Added listingType
   const location = searchParams.location || 'all';
   const minPrice = searchParams.minPrice;
   const maxPrice = searchParams.maxPrice;
@@ -36,6 +38,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
   const properties = await getProperties({ 
     searchTerm, 
     type: type as PropertyType | 'all', 
+    listingType: listingType as ListingType | 'all', // Pass listingType to getProperties
     location: location as PropertyLocation | 'all',
     minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
     maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
@@ -51,6 +54,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
         <PropertySearchBar 
           defaultSearchTerm={searchTerm}
           defaultType={type as PropertyType | 'all'}
+          // defaultListingType={listingType as ListingType | 'all'} // Prop for search bar if UI filter added
           defaultLocation={location as PropertyLocation | 'all'}
           defaultMinPrice={minPrice || ''}
           defaultMaxPrice={maxPrice || ''}
@@ -66,3 +70,4 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
 // Optional: Define fallback for Suspense if parts of this page were client-rendered with useSearchParams
 export const fallback: SuspenseProps['fallback'] = <div>Loading properties...</div>;
+

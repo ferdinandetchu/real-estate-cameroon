@@ -11,10 +11,14 @@ export const propertyTypes: PropertyType[] = ['house', 'land', 'guesthouse', 'ho
 export type PropertyLocation = 'Buea' | 'Limbe' | 'Douala';
 export const propertyLocations: PropertyLocation[] = ['Buea', 'Limbe', 'Douala'];
 
+export type ListingType = 'sale' | 'rent';
+export const listingTypes: ListingType[] = ['sale', 'rent'];
+
 export type Property = {
   id: string;
   name: string;
   type: PropertyType;
+  listingType: ListingType; // Added to differentiate sale vs rent
   location: PropertyLocation;
   price: number;
   currency: 'XAF' | 'USD';
@@ -59,3 +63,4 @@ export type BookingRequest = {
   status: 'pending' | 'confirmed' | 'cancelled';
   createdAt: string; // Store as ISO string
 };
+
