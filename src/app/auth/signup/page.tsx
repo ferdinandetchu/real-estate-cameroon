@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -18,7 +19,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Lock } from 'lucide-react';
+import type { AuthError } from 'firebase/auth';
 
 const signUpSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -26,13 +29,15 @@ const signUpSchema = z.object({
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match.",
-  path: ['confirmPassword'], // Point the error to the confirmPassword field
+  path: ['confirmPassword'],
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
   const { toast } = useToast();
+  const { signup, setError } = useAuth();
+  const router = useRouter();
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -46,15 +51,29 @@ export default function SignUpPage() {
 
   async function onSubmit(data: SignUpFormValues) {
     setIsLoading(true);
-    console.log('Sign Up data:', data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: 'Sign Up Submitted (Simulated)',
-      description: 'In a real app, your account would be created.',
-    });
-    setIsLoading(false);
-    // form.reset(); // Optionally reset form
+    setError(null);
+    try {
+      await signup(data.email, data.password);
+      toast({
+        title: 'Account Created!',
+        description: 'Your account has been successfully created. Please log in.',
+      });
+      router.push('/auth/login');
+    } catch (error) {
+      const authError = error as AuthError;
+      let errorMessage = authError.message || 'An unexpected error occurred during sign up.';
+       if (authError.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email address is already in use.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description: errorMessage,
+      });
+      setError(authError);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -76,7 +95,7 @@ export default function SignUpPage() {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" />
+                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" disabled={isLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -92,7 +111,7 @@ export default function SignUpPage() {
                      <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" />
+                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" disabled={isLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -108,7 +127,7 @@ export default function SignUpPage() {
                      <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" />
+                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" disabled={isLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -124,7 +143,7 @@ export default function SignUpPage() {
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+            <Link href="/auth/login" className={`font-medium text-primary hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
               Log in
             </Link>
           </p>

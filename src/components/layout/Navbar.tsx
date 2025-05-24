@@ -1,20 +1,51 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, UserCircle, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Navbar() {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/properties', label: 'Properties' },
-    // { href: '/agents', label: 'Agents' }, // Future link
-    // { href: '/contact', label: 'Contact Us' }, // Future link
   ];
 
-  // Placeholder for authentication status - in a real app, this would come from a context or hook
-  const isAuthenticated = false; 
+  const { currentUser, logout, loading } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Toast for logout is handled in AuthContext
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Could not log you out. Please try again.",
+      });
+    }
+  };
+  
+  const getInitials = (email?: string | null) => {
+    if (!email) return 'U';
+    const parts = email.split('@')[0].split(/[._-]/);
+    return parts.map(part => part[0]).join('').toUpperCase().slice(0,2);
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,12 +65,43 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center space-x-2">
-          {isAuthenticated ? (
-            <>
-              {/* <Button variant="outline">Profile</Button>
-              <Button variant="ghost">Logout</Button> */}
-              <p className="text-sm text-muted-foreground">User Logged In (Placeholder)</p>
-            </>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : currentUser ? (
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={currentUser.photoURL || ''} alt={currentUser.displayName || currentUser.email || 'User'} />
+                    <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {currentUser.displayName || currentUser.email?.split('@')[0]}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {/* <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator /> */}
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Button variant="outline" asChild>
@@ -73,11 +135,26 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                   {isAuthenticated ? (
+                   {loading ? (
+                     <p className="text-sm text-center text-muted-foreground">Loading...</p>
+                   ) : currentUser ? (
                     <>
-                      {/* <Button variant="outline" className="w-full">Profile</Button>
-                      <Button variant="ghost" className="w-full">Logout</Button> */}
-                       <p className="text-sm text-center text-muted-foreground">User Logged In (Placeholder)</p>
+                      <div className="flex items-center space-x-2 px-2 py-2">
+                        <Avatar>
+                          <AvatarImage src={currentUser.photoURL || ''} alt={currentUser.displayName || currentUser.email || 'User'} />
+                          <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {currentUser.displayName || currentUser.email?.split('@')[0]}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                        </div>
+                      </div>
+                      {/* <Button variant="outline" className="w-full" asChild><Link href="/profile">Profile</Link></Button> */}
+                      <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" /> Log out
+                      </Button>
                     </>
                     ) : (
                     <>

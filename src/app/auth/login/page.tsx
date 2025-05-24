@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -18,10 +19,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Lock } from 'lucide-react';
+import type { AuthError } from 'firebase/auth';
 
-// Placeholder for Google Icon, you might use a library or SVG
+// Placeholder for Google Icon
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -41,6 +44,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const { login, signInWithGoogle, setError } = useAuth();
+  const router = useRouter();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -50,29 +55,48 @@ export default function LoginPage() {
   });
 
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
 
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
-    console.log('Login data:', data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: 'Login Submitted (Simulated)',
-      description: 'In a real app, you would be logged in.',
-    });
-    setIsLoading(false);
-    // form.reset(); // Optionally reset form
+    setError(null);
+    try {
+      await login(data.email, data.password);
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back!',
+      });
+      router.push('/'); // Redirect to homepage or dashboard
+    } catch (error) {
+      const authError = error as AuthError;
+      let errorMessage = authError.message || 'An unexpected error occurred during login.';
+      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: errorMessage,
+      });
+      setError(authError); // Store error in context if needed elsewhere
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    console.log('Attempting Google Sign-In (Simulated)');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: 'Google Sign-In (Simulated)',
-      description: 'Google Sign-In flow would start here.',
-    });
-    setIsLoading(false);
+    setIsGoogleLoading(true);
+    setError(null);
+    try {
+      await signInWithGoogle();
+      // Successful Google sign-in is handled by AuthContext's onAuthStateChanged or the signInWithGoogle promise
+      // Redirect will happen from AuthContext or here if needed
+    } catch (error) {
+      // Error is already toasted by signInWithGoogle in AuthContext
+      // but we ensure loading state is reset.
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -94,7 +118,7 @@ export default function LoginPage() {
                      <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" />
+                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" disabled={isLoading || isGoogleLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -109,20 +133,20 @@ export default function LoginPage() {
                     <div className="flex justify-between items-center">
                       <FormLabel>Password</FormLabel>
                       <Link href="/auth/reset-password" passHref legacyBehavior>
-                        <a className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
+                        <a className={`text-sm font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}>Forgot password?</a>
                       </Link>
                     </div>
                      <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" />
+                        <Input type="password" placeholder="••••••••" {...field} className="pl-10 h-10" disabled={isLoading || isGoogleLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full h-11 text-base bg-accent hover:bg-accent/90" disabled={isLoading}>
+              <Button type="submit" className="w-full h-11 text-base bg-accent hover:bg-accent/90" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? 'Logging In...' : 'Log In'}
               </Button>
             </form>
@@ -131,18 +155,17 @@ export default function LoginPage() {
           <Separator className="my-6" />
 
           <div className="space-y-4">
-            <Button variant="outline" className="w-full h-11 text-base" onClick={handleGoogleSignIn} disabled={isLoading}>
+            <Button variant="outline" className="w-full h-11 text-base" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               <GoogleIcon />
-              {isLoading ? 'Processing...' : 'Sign in with Google'}
+              {isGoogleLoading ? 'Processing...' : 'Sign in with Google'}
             </Button>
-            {/* Add other OAuth providers here if needed */}
           </div>
 
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className="font-medium text-primary hover:underline">
+            <Link href="/auth/signup" className={`font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}>
               Sign up
             </Link>
           </p>

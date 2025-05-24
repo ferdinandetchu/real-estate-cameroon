@@ -18,7 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Mail } from 'lucide-react';
+import type { AuthError } from 'firebase/auth';
 
 const resetPasswordSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -28,6 +30,7 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const { toast } = useToast();
+  const { resetPassword, setError } = useAuth();
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -39,15 +42,25 @@ export default function ResetPasswordPage() {
 
   async function onSubmit(data: ResetPasswordFormValues) {
     setIsLoading(true);
-    console.log('Password Reset data:', data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: 'Password Reset Email Sent (Simulated)',
-      description: `If an account exists for ${data.email}, a reset link has been sent.`,
-    });
-    setIsLoading(false);
-    // form.reset(); // Optionally reset form
+    setError(null);
+    try {
+      await resetPassword(data.email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `If an account exists for ${data.email}, a password reset link has been sent. Please check your inbox.`,
+      });
+      form.reset();
+    } catch (error) {
+      const authError = error as AuthError;
+      toast({
+        variant: 'destructive',
+        title: 'Error Sending Reset Email',
+        description: authError.message || 'Failed to send password reset email. Please try again.',
+      });
+      setError(authError);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -69,7 +82,7 @@ export default function ResetPasswordPage() {
                      <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" />
+                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 h-10" disabled={isLoading} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -85,7 +98,7 @@ export default function ResetPasswordPage() {
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Remember your password?{' '}
-            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+            <Link href="/auth/login" className={`font-medium text-primary hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
               Log in
             </Link>
           </p>
