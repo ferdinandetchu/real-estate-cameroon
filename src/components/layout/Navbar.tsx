@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,9 @@ export function Navbar() {
     // { href: '/agents', label: 'Agents' }, // Future link
     // { href: '/contact', label: 'Contact Us' }, // Future link
   ];
+
+  // Placeholder for authentication status - in a real app, this would come from a context or hook
+  const isAuthenticated = false; 
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,8 +34,22 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center space-x-2">
-          {/* <Button variant="outline">Login</Button>
-          <Button>Sign Up</Button> */}
+          {isAuthenticated ? (
+            <>
+              {/* <Button variant="outline">Profile</Button>
+              <Button variant="ghost">Logout</Button> */}
+              <p className="text-sm text-muted-foreground">User Logged In (Placeholder)</p>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" asChild>
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/auth/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="md:hidden">
@@ -54,10 +72,24 @@ export function Navbar() {
                     {item.label}
                   </Link>
                 ))}
-                {/* <div className="flex flex-col space-y-2 pt-4 border-t">
-                    <Button variant="outline" className="w-full">Login</Button>
-                    <Button className="w-full">Sign Up</Button>
-                </div> */}
+                <div className="flex flex-col space-y-2 pt-4 border-t">
+                   {isAuthenticated ? (
+                    <>
+                      {/* <Button variant="outline" className="w-full">Profile</Button>
+                      <Button variant="ghost" className="w-full">Logout</Button> */}
+                       <p className="text-sm text-center text-muted-foreground">User Logged In (Placeholder)</p>
+                    </>
+                    ) : (
+                    <>
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href="/auth/login">Login</Link>
+                      </Button>
+                      <Button className="w-full" asChild>
+                        <Link href="/auth/signup">Sign Up</Link>
+                      </Button>
+                    </>
+                    )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>
