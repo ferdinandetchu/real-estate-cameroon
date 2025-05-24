@@ -1,3 +1,4 @@
+
 import type { Property, BookingRequest, PropertyType, PropertyLocation } from './types';
 
 const mockProperties: Property[] = [
@@ -114,7 +115,13 @@ const mockProperties: Property[] = [
   },
 ];
 
-export async function getProperties(filters?: { type?: PropertyType | 'all'; location?: PropertyLocation | 'all', searchTerm?: string }): Promise<Property[]> {
+export async function getProperties(filters?: { 
+  type?: PropertyType | 'all'; 
+  location?: PropertyLocation | 'all'; 
+  searchTerm?: string;
+  minPrice?: number;
+  maxPrice?: number;
+}): Promise<Property[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
   
@@ -134,6 +141,12 @@ export async function getProperties(filters?: { type?: PropertyType | 'all'; loc
         p.description.toLowerCase().includes(searchTermLower) ||
         p.address.toLowerCase().includes(searchTermLower)
       );
+    }
+    if (filters.minPrice !== undefined) {
+      filteredProperties = filteredProperties.filter(p => p.price >= filters.minPrice!);
+    }
+    if (filters.maxPrice !== undefined) {
+      filteredProperties = filteredProperties.filter(p => p.price <= filters.maxPrice!);
     }
   }
   

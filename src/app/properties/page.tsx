@@ -1,3 +1,4 @@
+
 import { getProperties } from '@/lib/data';
 import type { PropertyType, PropertyLocation } from '@/lib/types';
 import { PropertyList } from '@/components/properties/PropertyList';
@@ -9,6 +10,8 @@ interface PropertiesPageSearchParams {
   q?: string;
   type?: PropertyType | 'all';
   location?: PropertyLocation | 'all';
+  minPrice?: string;
+  maxPrice?: string;
 }
 
 // Helper to ensure search param values are valid or default
@@ -24,6 +27,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
   const searchTerm = searchParams.q || '';
   const type = searchParams.type || 'all';
   const location = searchParams.location || 'all';
+  const minPrice = searchParams.minPrice;
+  const maxPrice = searchParams.maxPrice;
 
   // In a real app with client-side filtering after initial load, 
   // this fetch would be the initial dataset.
@@ -31,7 +36,9 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
   const properties = await getProperties({ 
     searchTerm, 
     type: type as PropertyType | 'all', 
-    location: location as PropertyLocation | 'all' 
+    location: location as PropertyLocation | 'all',
+    minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
+    maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
   });
 
   return (
@@ -45,6 +52,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
           defaultSearchTerm={searchTerm}
           defaultType={type as PropertyType | 'all'}
           defaultLocation={location as PropertyLocation | 'all'}
+          defaultMinPrice={minPrice || ''}
+          defaultMaxPrice={maxPrice || ''}
         />
       </div>
       
