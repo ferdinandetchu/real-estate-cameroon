@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Tag, BedDouble, Bath, Maximize, LandPlot, Building, Home, Users, CalendarDays } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image'; // Added for map placeholder
 
 type PropertyDetailViewProps = {
   property: Property;
@@ -120,6 +121,33 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
           </div>
         )}
       
+        <Separator className="my-6 sm:my-8" />
+
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4">Location on Map</h2>
+          <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden shadow flex items-center justify-center">
+            {/* Placeholder for an embedded map. In a real app, integrate a map component here. */}
+            <Image 
+              src={`https://placehold.co/800x450.png?text=${encodeURIComponent('Map: ' + property.address)}`} 
+              alt={`Map showing approximate location of ${property.name}`}
+              width={800}
+              height={450}
+              className="object-cover w-full h-full"
+              data-ai-hint="map location"
+            />
+          </div>
+          <Button asChild variant="outline">
+            <a 
+              href={`https://maps.google.com/?q=${encodeURIComponent(property.address + ', ' + property.location)}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center"
+            >
+              <MapPin className="mr-2 h-4 w-4" /> View on Google Maps
+            </a>
+          </Button>
+        </div>
+
         <Separator className="my-6 sm:my-8" />
 
         <div>
