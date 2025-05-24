@@ -50,7 +50,7 @@ export function PropertySearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`grid grid-cols-1 md:grid-cols-4 gap-4 p-4 md:p-6 rounded-lg shadow-lg bg-card ${className}`}
+      className={`grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 md:p-6 rounded-lg shadow-lg bg-card ${className}`}
     >
       <div className="md:col-span-4">
         <Input
@@ -58,13 +58,13 @@ export function PropertySearchBar({
           placeholder="Search by keyword (e.g. Buea, villa)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-12 text-base"
+          className="h-10 sm:h-12" // Adjusted height, text size from base Input
         />
       </div>
       
       <div className="md:col-span-2">
         <Select value={type} onValueChange={(value) => setType(value as PropertyType | 'all')}>
-          <SelectTrigger className="h-12 text-base">
+          <SelectTrigger className="h-10 sm:h-12"> {/* Text size from base SelectTrigger */}
             <SelectValue placeholder="Property Type" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +80,7 @@ export function PropertySearchBar({
 
       <div className="md:col-span-2">
         <Select value={location} onValueChange={(value) => setLocation(value as PropertyLocation | 'all')}>
-          <SelectTrigger className="h-12 text-base">
+          <SelectTrigger className="h-10 sm:h-12"> {/* Text size from base SelectTrigger */}
             <SelectValue placeholder="Location" />
           </SelectTrigger>
           <SelectContent>
@@ -95,33 +95,33 @@ export function PropertySearchBar({
       </div>
 
       <div className="md:col-span-2 space-y-1">
-        <Label htmlFor="minPrice" className="text-sm font-medium text-muted-foreground">Min Price (XAF)</Label>
+        <Label htmlFor="minPrice" className="text-xs sm:text-sm font-medium text-muted-foreground">Min Price (XAF)</Label>
         <Input
           id="minPrice"
           type="number"
           placeholder="e.g. 10000000"
           value={minPrice}
           onChange={(e) => setMinPrice(e.target.value)}
-          className="h-12 text-base"
+          className="h-10 sm:h-12" // Adjusted height, text size from base Input
           min="0"
         />
       </div>
 
       <div className="md:col-span-2 space-y-1">
-        <Label htmlFor="maxPrice" className="text-sm font-medium text-muted-foreground">Max Price (XAF)</Label>
+        <Label htmlFor="maxPrice" className="text-xs sm:text-sm font-medium text-muted-foreground">Max Price (XAF)</Label>
         <Input
           id="maxPrice"
           type="number"
           placeholder="e.g. 50000000"
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
-          className="h-12 text-base"
+          className="h-10 sm:h-12" // Adjusted height, text size from base Input
           min="0"
         />
       </div>
       
-      <Button type="submit" className="md:col-span-4 h-12 text-lg bg-accent hover:bg-accent/90">
-        <Search className="mr-2 h-5 w-5" /> Find Property
+      <Button type="submit" className="md:col-span-4 h-10 sm:h-12 text-sm sm:text-base lg:text-lg bg-accent hover:bg-accent/90">
+        <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Find Property
       </Button>
     </form>
   );
