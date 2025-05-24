@@ -1,5 +1,9 @@
+
+'use client'; // Ensure this component is a client component for useState and useEffect
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 import type { Property } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +15,22 @@ type PropertyCardProps = {
 };
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: currency }).format(price);
-  };
+  const [clientFormattedPrice, setClientFormattedPrice] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Format price on the client after hydration
+    try {
+      setClientFormattedPrice(
+        new Intl.NumberFormat('fr-CM', { style: 'currency', currency: property.currency }).format(property.price)
+      );
+    } catch (e) {
+      console.error("Error formatting price:", e);
+      // Fallback to a simple display if Intl fails
+      setClientFormattedPrice(`${property.price} ${property.currency}`);
+    }
+  }, [property.price, property.currency]);
+
+  const displayPrice = clientFormattedPrice || `${property.price} ${property.currency}`; // Fallback for SSR and initial client render
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
@@ -65,7 +82,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center border-t">
         <p className="text-xl font-semibold text-primary flex items-center">
-           <Tag className="w-5 h-5 mr-2" /> {formatPrice(property.price, property.currency)}
+           <Tag className="w-5 h-5 mr-2" /> {displayPrice}
            { (property.type === 'guesthouse' || property.type === 'hotel') && <span className="text-xs text-muted-foreground ml-1">/night</span>}
         </p>
         <Button asChild size="sm" variant="default">

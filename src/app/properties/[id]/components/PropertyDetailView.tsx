@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Property } from '@/lib/types';
 import { PropertyImageGallery } from '@/components/properties/PropertyImageGallery';
 import { BookingModal } from '@/components/modals/BookingModal';
@@ -15,10 +16,20 @@ type PropertyDetailViewProps = {
 
 export function PropertyDetailView({ property }: PropertyDetailViewProps) {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [clientFormattedPrice, setClientFormattedPrice] = useState<string | null>(null);
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: currency }).format(price);
-  };
+  useEffect(() => {
+    // Format price on the client after hydration
+    try {
+      setClientFormattedPrice(
+        new Intl.NumberFormat('fr-CM', { style: 'currency', currency: property.currency }).format(property.price)
+      );
+    } catch (e) {
+      console.error("Error formatting price:", e);
+      // Fallback to a simple display if Intl fails
+      setClientFormattedPrice(`${property.price} ${property.currency}`);
+    }
+  }, [property.price, property.currency]);
 
   const getPropertyTypeIcon = (type: Property['type']) => {
     switch (type) {
@@ -29,6 +40,8 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
       default: return <Home className="w-5 h-5 mr-2 text-primary" />;
     }
   };
+
+  const displayPrice = clientFormattedPrice || `${property.price} ${property.currency}`; // Fallback for SSR and initial client render
 
   return (
     <>
@@ -47,7 +60,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
 
           <div className="text-3xl font-bold text-accent flex items-center">
             <Tag className="w-7 h-7 mr-2" />
-            {formatPrice(property.price, property.currency)}
+            {displayPrice}
             {(property.type === 'guesthouse' || property.type === 'hotel') && <span className="text-base text-muted-foreground ml-2">/night</span>}
           </div>
           
