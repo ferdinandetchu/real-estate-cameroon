@@ -17,9 +17,9 @@ const mockProperties: Property[] = [
     areaSqMeters: 300,
     amenities: ['WiFi', 'Parking', 'Garden', 'Security', 'Air Conditioning'],
     images: [
-      { url: 'https://placehold.co/800x600.png', alt: 'Front view of the villa', hint: 'modern villa' },
-      { url: 'https://placehold.co/800x600.png', alt: 'Living room', hint: 'luxury living room' },
-      { url: 'https://placehold.co/800x600.png', alt: 'Garden view', hint: 'lush garden' },
+      { url: 'https://images.unsplash.com/photo-1664210905659-c9cb32dd75bd', alt: 'Front view of the villa', hint: 'modern villa' },
+      { url: 'https://images.unsplash.com/photo-1638885930125-85350348d266', alt: 'Living room', hint: 'luxury living room' },
+      { url: 'https://images.unsplash.com/photo-1666228459069-d308cbea796b', alt: 'Garden view', hint: 'lush garden' },
     ],
     isFeatured: true,
     agent: { name: 'John Doe', phone: '+237670000001', email: 'john.doe@cameroonestates.com' },

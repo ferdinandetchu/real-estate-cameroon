@@ -53,7 +53,7 @@ export default function HomePage() {
       <section className="relative py-16 sm:py-20 md:py-32 bg-gradient-to-br from-primary/30 via-background to-background">
         <div
             className="absolute inset-0 bg-cover bg-center opacity-20"
-            style={{ backgroundImage: "url('https://placehold.co/1920x1080.png?text=Cameroon+Landscape')" }}
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1637244018403-785e7fa8707a?q=80&w=2143&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}
             data-ai-hint="cameroon landscape"
           ></div>
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
