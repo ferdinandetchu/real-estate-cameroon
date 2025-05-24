@@ -3,7 +3,7 @@ import { FeaturedProperties } from '@/components/properties/FeaturedProperties';
 import { PropertySearchBar } from '@/components/search/PropertySearchBar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image'; // Added import
+import Image from 'next/image'; // This import is still needed for other images on the page
 import { ShieldCheck, Users, Camera, Search as SearchIcon, Eye, Lock } from 'lucide-react';
 
 export default function HomePage() {
@@ -54,15 +54,14 @@ export default function HomePage() {
       <section className="relative py-16 sm:py-20 md:py-32 bg-gradient-to-br from-primary/30 via-background to-background">
         <div
             className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1547554183-9938c19702c6?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            data-ai-hint="cameroon landscape"
           >
-            <Image
-              src="https://placehold.co/1920x1080.png"
-              alt="Background image of Cameroon landscape"
-              fill
-              style={{ objectFit: 'cover' }}
-              data-ai-hint="cameroon landscape"
-              priority
-            />
+            {/* This div acts as the overlay for the background image */}
           </div>
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-primary">
