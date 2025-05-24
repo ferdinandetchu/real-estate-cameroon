@@ -41,14 +41,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
             alt={property.images[0].alt}
             width={400}
             height={250}
-            className="w-full h-56 object-cover"
+            className="w-full h-60 object-cover"
             data-ai-hint={property.images[0].hint || 'property exterior'}
           />
         </Link>
         <Badge variant="secondary" className="absolute top-2 right-2 capitalize">{property.type}</Badge>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-lg mb-1">
+        <CardTitle className="text-xl mb-1">
           <Link href={`/properties/${property.id}`} className="hover:text-primary transition-colors">
             {property.name}
           </Link>
@@ -70,14 +70,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
           )}
           {property.areaSqMeters && (
             <div className="flex items-center">
-              <Maximize className="w-4 h-4 mr-1 text-primary" /> {property.areaSqMeters} m²
+              {property.type === 'land' ?
+                <LandPlot className="w-4 h-4 mr-1 text-primary" /> :
+                <Maximize className="w-4 h-4 mr-1 text-primary" />
+              }
+              {property.areaSqMeters} m²
             </div>
           )}
-           {property.type === 'land' && property.areaSqMeters && (
-             <div className="flex items-center col-span-2">
-               <LandPlot className="w-4 h-4 mr-1 text-primary" /> {property.areaSqMeters} m²
-             </div>
-           )}
+          {/* Removed redundant block for land area display, as the block above already handles it conditionally */}
         </div>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center border-t">
