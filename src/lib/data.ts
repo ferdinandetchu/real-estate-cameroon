@@ -1,5 +1,5 @@
 
-import type { Property, BookingRequest, PropertyType, PropertyLocation, AppointmentType } from './types';
+import type { Property, BookingRequest, PropertyType, PropertyLocation, AppointmentType, PaymentMethod } from './types';
 
 const mockProperties: Property[] = [
   {
@@ -170,12 +170,15 @@ type SubmitBookingRequestData = Omit<BookingRequest, 'id' | 'status' | 'createdA
 export async function submitBookingRequest(bookingData: SubmitBookingRequestData): Promise<string> {
   // Simulate API delay and booking submission
   await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Booking request submitted:', {
+  
+  const fullBookingData: BookingRequest = {
+    id: `booking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     ...bookingData,
-    appointmentType: bookingData.appointmentType, // Ensure this is logged
-  });
-  const bookingId = `booking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  
+  console.log('Booking request submitted:', fullBookingData);
   // In a real app, this would write to Firestore.
-  // Here we could add the full booking request (including status and createdAt) to a mock array if needed.
-  return bookingId;
+  return fullBookingData.id;
 }

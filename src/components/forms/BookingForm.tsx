@@ -1,7 +1,7 @@
 
 'use client';
 
-import * as React from 'react'; // Added React import
+import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -11,14 +11,50 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { submitBookingRequest } from '@/lib/data';
-import type { Property, AppointmentType } from '@/lib/types';
-import { appointmentTypes } from '@/lib/types';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye, Video, Briefcase } from 'lucide-react';
+import type { Property, AppointmentType, PaymentMethod } from '@/lib/types';
+import { appointmentTypes, paymentMethods } from '@/lib/types';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye, Video, Briefcase, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Separator } from '../ui/separator';
+
+const appointmentTypeDetailsMap: Record<AppointmentType, {
+  label: string;
+  icon: React.ElementType;
+  benefits: string[];
+  price: number; // in XAF
+  priceDescription: string;
+}> = {
+  'physical-viewing': {
+    label: 'Physical Viewing',
+    icon: Eye,
+    benefits: ['In-person tour of the property.', 'Meet the agent directly.', 'Assess neighborhood and surroundings.'],
+    price: 5000,
+    priceDescription: 'Service fee for site visit coordination.',
+  },
+  'virtual-tour': {
+    label: 'Virtual Tour',
+    icon: Video,
+    benefits: ['Guided tour via video call.', 'Ask questions in real-time.', 'View from anywhere.'],
+    price: 2500,
+    priceDescription: 'Fee for live virtual tour session.',
+  },
+  'phone-consultation': {
+    label: 'Phone Consultation',
+    icon: PhoneIcon, // Using PhoneIcon as it's common for calls
+    benefits: ['Discuss property details with an agent.', 'Clarify doubts and get advice.', 'Quick and convenient.'],
+    price: 0,
+    priceDescription: 'Initial consultation is free.',
+  },
+};
+
+const paymentMethodDetailsMap: Record<PaymentMethod, { label: string; icon: React.ElementType }> = {
+  'creditCard': { label: 'Credit Card', icon: CreditCard },
+  'mobileMoney': { label: 'Mobile Money', icon: Smartphone },
+};
 
 const bookingFormSchema = z.object({
   propertyName: z.string(),
@@ -30,13 +66,37 @@ const bookingFormSchema = z.object({
   }),
   meetingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)"),
   meetingLocation: z.string().min(5, { message: 'Meeting location must be at least 5 characters.' })
-    .or(z.literal("").transform(() => undefined)).optional(), // Allow empty for virtual/phone
+    .or(z.literal("").transform(() => undefined)).optional(),
   userName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   userPhone: z.string().min(9, { message: 'Phone number seems too short.' }),
   userEmail: z.string().email({ message: 'Invalid email address.' }),
+  paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method."}),
+  cardNumber: z.string().optional(),
+  cardExpiry: z.string().optional(), // MM/YY
+  cardCVC: z.string().optional(),
+  mobileMoneyNumber: z.string().optional(),
 }).refine(data => data.appointmentType === 'physical-viewing' ? !!data.meetingLocation : true, {
   message: "Meeting location is required for physical viewings.",
   path: ["meetingLocation"],
+}).superRefine((data, ctx) => {
+  const selectedAppointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price;
+  if (selectedAppointmentPrice > 0) { // Only validate payment if there's a cost
+    if (data.paymentMethod === 'creditCard') {
+      if (!data.cardNumber || !/^\d{13,19}$/.test(data.cardNumber.replace(/\s/g, ''))) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid card number (13-19 digits).", path: ["cardNumber"] });
+      }
+      if (!data.cardExpiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.cardExpiry)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid expiry date (MM/YY).", path: ["cardExpiry"] });
+      }
+      if (!data.cardCVC || !/^\d{3,4}$/.test(data.cardCVC)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid CVC (3-4 digits).", path: ["cardCVC"] });
+      }
+    } else if (data.paymentMethod === 'mobileMoney') {
+      if (!data.mobileMoneyNumber || !/^\+?\d{9,15}$/.test(data.mobileMoneyNumber)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid mobile money number.", path: ["mobileMoneyNumber"] });
+      }
+    }
+  }
 });
 
 
@@ -46,19 +106,6 @@ type BookingFormProps = {
   property: Property;
   onSuccess?: () => void;
 };
-
-const appointmentTypeIcons: Record<AppointmentType, React.ElementType> = {
-  'physical-viewing': Eye,
-  'virtual-tour': Video,
-  'phone-consultation': PhoneIcon,
-};
-
-const appointmentTypeLabels: Record<AppointmentType, string> = {
-  'physical-viewing': 'Physical Viewing',
-  'virtual-tour': 'Virtual Tour',
-  'phone-consultation': 'Phone Consultation',
-};
-
 
 export function BookingForm({ property, onSuccess }: BookingFormProps) {
   const { toast } = useToast();
@@ -73,10 +120,37 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       userName: '',
       userPhone: '',
       userEmail: '',
+      paymentMethod: 'creditCard',
+      cardNumber: '',
+      cardExpiry: '',
+      cardCVC: '',
+      mobileMoneyNumber: '',
     },
   });
 
   const selectedAppointmentType = form.watch('appointmentType');
+  const selectedPaymentMethod = form.watch('paymentMethod');
+  
+  const [clientFormattedAppointmentPrice, setClientFormattedAppointmentPrice] = React.useState<string | null>(null);
+
+  const currentAppointmentDetails = appointmentTypeDetailsMap[selectedAppointmentType as AppointmentType];
+  const currentAppointmentPrice = currentAppointmentDetails?.price ?? 0;
+
+  React.useEffect(() => {
+    if (currentAppointmentDetails) {
+      try {
+        setClientFormattedAppointmentPrice(
+          new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF' }).format(currentAppointmentDetails.price)
+        );
+      } catch (e) {
+        console.error("Error formatting appointment price:", e);
+        setClientFormattedAppointmentPrice(`${currentAppointmentDetails.price} XAF`);
+      }
+    } else {
+      setClientFormattedAppointmentPrice(null);
+    }
+  }, [currentAppointmentDetails]);
+
 
   async function onSubmit(data: BookingFormValues) {
     try {
@@ -84,15 +158,23 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       const [hours, minutes] = data.meetingTime.split(':').map(Number);
       meetingDateTime.setHours(hours, minutes);
 
+      const appointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price ?? 0;
+
       const bookingId = await submitBookingRequest({
         propertyId: property.id,
         propertyName: data.propertyName,
         appointmentType: data.appointmentType as AppointmentType,
+        appointmentPrice: appointmentPrice,
         meetingTime: meetingDateTime.toISOString(),
-        meetingLocation: data.meetingLocation || 'N/A', // Default if not applicable
+        meetingLocation: data.meetingLocation || 'N/A',
         userName: data.userName,
         userPhone: data.userPhone,
         userEmail: data.userEmail,
+        paymentMethod: appointmentPrice > 0 ? data.paymentMethod : undefined,
+        cardNumber: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardNumber : undefined,
+        cardExpiry: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardExpiry : undefined,
+        cardCVC: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardCVC : undefined,
+        mobileMoneyNumber: appointmentPrice > 0 && data.paymentMethod === 'mobileMoney' ? data.mobileMoneyNumber : undefined,
       });
       toast({
         title: 'Booking Request Sent!',
@@ -136,19 +218,19 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                 <FormControl>
                   <SelectTrigger className="h-10">
                     <div className="flex items-center">
-                       {React.createElement(appointmentTypeIcons[field.value as AppointmentType] || Briefcase, { className: "mr-2 h-4 w-4 text-muted-foreground" })}
+                       {React.createElement(appointmentTypeDetailsMap[field.value as AppointmentType]?.icon || Briefcase, { className: "mr-2 h-4 w-4 text-muted-foreground" })}
                        <SelectValue placeholder="Select an appointment type" />
                     </div>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {appointmentTypes.map((type) => {
-                    const IconComponent = appointmentTypeIcons[type];
+                    const details = appointmentTypeDetailsMap[type];
                     return (
                       <SelectItem key={type} value={type}>
                         <div className="flex items-center">
-                          <IconComponent className="mr-2 h-4 w-4 text-muted-foreground" />
-                          {appointmentTypeLabels[type]}
+                          <details.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                          {details.label}
                         </div>
                       </SelectItem>
                     );
@@ -159,6 +241,30 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
             </FormItem>
           )}
         />
+
+        {currentAppointmentDetails && (
+          <div className="mt-4 p-4 border rounded-md bg-card space-y-3">
+            <h4 className="font-semibold text-md text-primary">{currentAppointmentDetails.label} Details</h4>
+            <div>
+              <p className="text-sm font-medium text-foreground/90">Benefits:</p>
+              <ul className="list-none pl-0 mt-1 space-y-1">
+                {currentAppointmentDetails.benefits.map((benefit, idx) => (
+                  <li key={idx} className="flex items-start text-sm text-muted-foreground">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 text-green-500 shrink-0" />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground/90">Price:</p>
+              <p className="text-lg font-semibold text-accent">
+                {clientFormattedAppointmentPrice || `${currentAppointmentDetails.price} XAF`}
+              </p>
+              {currentAppointmentDetails.priceDescription && <p className="text-xs text-muted-foreground">{currentAppointmentDetails.priceDescription}</p>}
+            </div>
+          </div>
+        )}
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,7 +299,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date < new Date(new Date().setDate(new Date().getDate() -1)) // Disable past dates
+                        date < new Date(new Date().setDate(new Date().getDate() -1)) 
                       }
                       initialFocus
                     />
@@ -294,6 +400,106 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
             </FormItem>
           )}
         />
+
+        {currentAppointmentPrice > 0 && (
+          <>
+            <Separator className="my-6" />
+            <h3 className="text-lg font-medium">Payment Information</h3>
+            <p className="text-sm text-muted-foreground">
+              Secure your booking by providing payment details. Amount: <span className="font-semibold text-accent">{clientFormattedAppointmentPrice || `${currentAppointmentPrice} XAF`}</span>.
+            </p>
+            <FormField
+              control={form.control}
+              name="paymentMethod"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Method</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-10">
+                         <div className="flex items-center">
+                            {React.createElement(paymentMethodDetailsMap[field.value as PaymentMethod]?.icon || Briefcase, { className: "mr-2 h-4 w-4 text-muted-foreground" })}
+                            <SelectValue placeholder="Select payment method" />
+                         </div>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {paymentMethods.map((method) => {
+                        const details = paymentMethodDetailsMap[method];
+                        return (
+                          <SelectItem key={method} value={method}>
+                             <div className="flex items-center">
+                                <details.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {details.label}
+                             </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {selectedPaymentMethod === 'creditCard' && (
+              <div className="space-y-4 p-4 border rounded-md bg-card">
+                <FormField
+                  control={form.control}
+                  name="cardNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Card Number</FormLabel>
+                      <FormControl><Input placeholder="0000 0000 0000 0000" {...field} className="h-10"/></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="cardExpiry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiry Date</FormLabel>
+                        <FormControl><Input placeholder="MM/YY" {...field} className="h-10"/></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="cardCVC"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CVC</FormLabel>
+                        <FormControl><Input placeholder="123" {...field} className="h-10"/></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedPaymentMethod === 'mobileMoney' && (
+               <div className="space-y-4 p-4 border rounded-md bg-card">
+                <FormField
+                  control={form.control}
+                  name="mobileMoneyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mobile Money Number</FormLabel>
+                      <FormControl><Input type="tel" placeholder="+237 XXX XX XX XX" {...field} className="h-10"/></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </>
+        )}
+        
         <Button type="submit" className="w-full h-12 text-lg bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? 'Submitting...' : 'Send Booking Request'}
         </Button>

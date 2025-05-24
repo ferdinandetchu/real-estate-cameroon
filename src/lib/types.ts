@@ -37,16 +37,25 @@ export type Property = {
 export type AppointmentType = 'physical-viewing' | 'virtual-tour' | 'phone-consultation';
 export const appointmentTypes: AppointmentType[] = ['physical-viewing', 'virtual-tour', 'phone-consultation'];
 
+export const paymentMethods = ['creditCard', 'mobileMoney'] as const;
+export type PaymentMethod = typeof paymentMethods[number];
+
 export type BookingRequest = {
   id: string;
   propertyId: string;
   propertyName: string;
   appointmentType: AppointmentType;
+  appointmentPrice: number; // Price for the selected appointment type
   meetingTime: string; // Store as ISO string or suitable string format
   meetingLocation: string;
   userName: string;
   userPhone: string;
   userEmail: string;
+  paymentMethod?: PaymentMethod;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCVC?: string;
+  mobileMoneyNumber?: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   createdAt: string; // Store as ISO string
 };
