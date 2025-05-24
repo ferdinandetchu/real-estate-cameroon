@@ -34,10 +34,14 @@ export type Property = {
   };
 };
 
+export type AppointmentType = 'physical-viewing' | 'virtual-tour' | 'phone-consultation';
+export const appointmentTypes: AppointmentType[] = ['physical-viewing', 'virtual-tour', 'phone-consultation'];
+
 export type BookingRequest = {
   id: string;
   propertyId: string;
   propertyName: string;
+  appointmentType: AppointmentType;
   meetingTime: string; // Store as ISO string or suitable string format
   meetingLocation: string;
   userName: string;

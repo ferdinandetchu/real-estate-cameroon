@@ -1,5 +1,5 @@
 
-import type { Property, BookingRequest, PropertyType, PropertyLocation } from './types';
+import type { Property, BookingRequest, PropertyType, PropertyLocation, AppointmentType } from './types';
 
 const mockProperties: Property[] = [
   {
@@ -115,16 +115,16 @@ const mockProperties: Property[] = [
   },
 ];
 
-export async function getProperties(filters?: { 
-  type?: PropertyType | 'all'; 
-  location?: PropertyLocation | 'all'; 
+export async function getProperties(filters?: {
+  type?: PropertyType | 'all';
+  location?: PropertyLocation | 'all';
   searchTerm?: string;
   minPrice?: number;
   maxPrice?: number;
 }): Promise<Property[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   let filteredProperties = mockProperties;
 
   if (filters) {
@@ -136,7 +136,7 @@ export async function getProperties(filters?: {
     }
     if (filters.searchTerm) {
       const searchTermLower = filters.searchTerm.toLowerCase();
-      filteredProperties = filteredProperties.filter(p => 
+      filteredProperties = filteredProperties.filter(p =>
         p.name.toLowerCase().includes(searchTermLower) ||
         p.description.toLowerCase().includes(searchTermLower) ||
         p.address.toLowerCase().includes(searchTermLower)
@@ -149,7 +149,7 @@ export async function getProperties(filters?: {
       filteredProperties = filteredProperties.filter(p => p.price <= filters.maxPrice!);
     }
   }
-  
+
   return filteredProperties;
 }
 
@@ -165,11 +165,17 @@ export async function getFeaturedProperties(): Promise<Property[]> {
   return mockProperties.filter(p => p.isFeatured);
 }
 
-export async function submitBookingRequest(bookingData: Omit<BookingRequest, 'id' | 'status' | 'createdAt'>): Promise<string> {
+type SubmitBookingRequestData = Omit<BookingRequest, 'id' | 'status' | 'createdAt'>;
+
+export async function submitBookingRequest(bookingData: SubmitBookingRequestData): Promise<string> {
   // Simulate API delay and booking submission
   await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Booking request submitted:', bookingData);
+  console.log('Booking request submitted:', {
+    ...bookingData,
+    appointmentType: bookingData.appointmentType, // Ensure this is logged
+  });
   const bookingId = `booking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   // In a real app, this would write to Firestore.
+  // Here we could add the full booking request (including status and createdAt) to a mock array if needed.
   return bookingId;
 }
