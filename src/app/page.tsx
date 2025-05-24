@@ -3,7 +3,7 @@ import { FeaturedProperties } from '@/components/properties/FeaturedProperties';
 import { PropertySearchBar } from '@/components/search/PropertySearchBar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ShieldCheck, Users, Camera } from 'lucide-react';
+import { ShieldCheck, Users, Camera, Search as SearchIcon, Eye, Lock } from 'lucide-react';
 
 export default function HomePage() {
   const benefits = [
@@ -21,6 +21,29 @@ export default function HomePage() {
       icon: <Camera className="w-12 h-12 text-accent mb-4" />,
       title: 'High-Quality Media',
       description: 'Explore properties through stunning photos and detailed virtual tours, bringing them to life.',
+    },
+  ];
+
+  const howItWorksSteps = [
+    {
+      icon: <SearchIcon className="w-10 h-10 text-accent mb-3" />,
+      title: 'Search Properties',
+      description: 'Use our advanced filters to find houses, lands, or guesthouses in your preferred Cameroonian city.',
+    },
+    {
+      icon: <Eye className="w-10 h-10 text-accent mb-3" />,
+      title: 'Explore Details',
+      description: 'View high-quality photos, detailed descriptions, amenities, and virtual tours for each listing.',
+    },
+    {
+      icon: <Users className="w-10 h-10 text-accent mb-3" />,
+      title: 'Connect with Agents',
+      description: 'Easily contact our verified agents to ask questions, schedule viewings, or request a booking session.',
+    },
+    {
+      icon: <Lock className="w-10 h-10 text-accent mb-3" />,
+      title: 'Secure Your Property',
+      description: 'Our agents will guide you through the process to help you secure your dream property with confidence.',
     },
   ];
 
@@ -65,6 +88,29 @@ export default function HomePage() {
                 {benefit.icon}
                 <h3 className="text-xl font-semibold text-primary mb-2">{benefit.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 md:py-20 bg-secondary/20">
+        <div className="container mx-auto px-4 md:px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-primary">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+            {howItWorksSteps.map((step, index) => (
+              <div key={step.title} className="flex flex-col items-center text-center p-6 bg-card rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="relative mb-4">
+                  {step.icon}
+                  <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                    {index + 1}
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold text-primary mb-2">{step.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
