@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Cameroon Estates Discovery',
+  title: 'Crown Homes',
   description: 'Find your dream property in Cameroon.',
 };
 

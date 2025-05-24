@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 
 export function Footer() {
@@ -6,7 +7,7 @@ export function Footer() {
       <div className="container mx-auto py-8 px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-semibold text-primary mb-2">Cameroon Estates Discovery</h3>
+            <h3 className="text-lg font-semibold text-primary mb-2">Crown Homes</h3>
             <p className="text-sm text-muted-foreground">Your gateway to properties in Cameroon.</p>
           </div>
           <div>
@@ -21,12 +22,12 @@ export function Footer() {
           <div>
             <h4 className="text-md font-semibold mb-2">Contact Us</h4>
             <p className="text-sm text-muted-foreground">Buea, Cameroon</p>
-            <p className="text-sm text-muted-foreground">Email: info@cameroonestates.com</p>
+            <p className="text-sm text-muted-foreground">Email: info@crownhomes.com</p>
             <p className="text-sm text-muted-foreground">Phone: +237 123 456 789</p>
           </div>
         </div>
         <div className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Cameroon Estates Discovery. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Crown Homes. All rights reserved.</p>
         </div>
       </div>
     </footer>

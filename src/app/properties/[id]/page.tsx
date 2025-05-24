@@ -1,3 +1,4 @@
+
 import { getPropertyById } from '@/lib/data';
 import { PropertyDetailView } from './components/PropertyDetailView';
 import { notFound } from 'next/navigation';
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: PropertyDetailPageProps) {
     };
   }
   return {
-    title: `${property.name} - Cameroon Estates Discovery`,
+    title: `${property.name} - Crown Homes`,
     description: property.description.substring(0, 160),
   };
 }
