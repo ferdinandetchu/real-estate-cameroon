@@ -1,88 +1,91 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 60 56% 90%; /* #F5F5DC - Very light beige */
-    --foreground: 25 70% 10%; /* Very dark brown for text */
+    /* Light Theme - Dark Blue, Sky Blue, White */
+    --background: 0 0% 100%; /* White */
+    --foreground: 212 65% 15%; /* Dark Blue for text */
 
-    --card: 60 30% 97%; /* Slightly off-white/beige for cards */
-    --card-foreground: 25 70% 10%; /* Dark brown text for cards */
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 212 65% 15%; /* Dark Blue for text on cards */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 25 70% 10%;
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 212 65% 15%; /* Dark Blue */
 
-    --primary: 25 70% 30%; /* #8B4513 - Rich muted brown */
-    --primary-foreground: 30 30% 92%; /* Off-white, slightly warm */
+    --primary: 212 65% 25%; /* Dark Blue for primary elements */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 60 25% 80%; /* Muted beige for secondary elements */
-    --secondary-foreground: 25 70% 20%; /* Darker brown for text on secondary */
+    --secondary: 217 91% 90%; /* Very Light Sky Blue for secondary elements */
+    --secondary-foreground: 212 65% 25%; /* Dark Blue text on secondary */
 
-    --muted: 60 20% 85%; /* Muted beige for less important text or elements */
-    --muted-foreground: 25 40% 35%; /* Darker muted brown for text on muted backgrounds */
+    --muted: 210 40% 96%; /* Very Light Gray/Blue for muted elements */
+    --muted-foreground: 215 25% 45%; /* Muted Dark Blue/Gray text */
 
-    --accent: 25 74% 53%; /* #D2691E - Deep red-orange for CTAs */
-    --accent-foreground: 0 0% 100%; /* Pure white for text on accent */
+    --accent: 217 91% 60%; /* Sky Blue for CTAs */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%; /* Standard destructive red */
+    --destructive-foreground: 0 0% 98%; /* Light text on destructive */
 
-    --border: 60 20% 80%; /* Soft beige border */
-    --input: 60 30% 94%; /* Lighter beige for input background */
-    --ring: 25 74% 53%; /* Accent color for focus rings */
+    --border: 217 91% 85%; /* Light Sky Blue border */
+    --input: 0 0% 100%; /* White for input background */
+    --ring: 217 91% 60%; /* Sky Blue for focus rings */
 
     --radius: 0.5rem;
 
-    /* Sidebar variables - kept for shadcn/ui consistency, though not a primary focus for this app */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar Light Theme */
+    --sidebar-background: 210 40% 98%; /* Light Gray/Blue */
+    --sidebar-foreground: 212 65% 15%; /* Dark Blue */
+    --sidebar-primary: 212 65% 25%; /* Dark Blue */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 217 91% 90%; /* Very Light Sky Blue */
+    --sidebar-accent-foreground: 212 65% 25%; /* Dark Blue */
+    --sidebar-border: 217 91% 85%; /* Light Sky Blue border */
+    --sidebar-ring: 217 91% 60%; /* Sky Blue */
   }
 
   .dark {
-    --background: 25 70% 10%; /* Dark brown */
-    --foreground: 60 56% 90%; /* Light beige */
+    /* Dark Theme - Dark Blue, Sky Blue, White */
+    --background: 212 65% 15%; /* Dark Blue */
+    --foreground: 0 0% 100%; /* White text */
 
-    --card: 25 70% 15%; /* Slightly lighter dark brown */
-    --card-foreground: 60 56% 90%;
+    --card: 212 65% 20%; /* Slightly Lighter Dark Blue for cards */
+    --card-foreground: 0 0% 100%; /* White text on cards */
 
-    --popover: 25 70% 10%;
-    --popover-foreground: 60 56% 90%;
+    --popover: 212 65% 15%; /* Dark Blue */
+    --popover-foreground: 0 0% 100%; /* White */
 
-    --primary: 25 74% 53%; /* Red-orange becomes primary in dark mode for visibility */
-    --primary-foreground: 0 0% 100%;
+    --primary: 217 91% 60%; /* Sky Blue for primary elements */
+    --primary-foreground: 212 65% 10%; /* Very Dark Blue text on primary */
 
-    --secondary: 25 70% 20%; /* Darker muted brown */
-    --secondary-foreground: 60 56% 90%;
+    --secondary: 212 65% 25%; /* Lighter Dark Blue for secondary elements */
+    --secondary-foreground: 0 0% 100%; /* White text on secondary */
 
-    --muted: 25 70% 25%;
-    --muted-foreground: 60 30% 70%;
+    --muted: 212 65% 30%; /* Muted Dark Blue */
+    --muted-foreground: 210 40% 80%; /* Light Gray/Blue text */
 
-    --accent: 25 70% 30%; /* Muted brown as accent in dark mode */
-    --accent-foreground: 30 30% 92%;
-
-    --destructive: 0 62.8% 30.6%;
+    --accent: 217 91% 70%; /* Lighter Sky Blue for CTAs */
+    --accent-foreground: 212 65% 10%; /* Very Dark Blue text on accent */
+    
+    --destructive: 0 62.8% 30.6%; /* Standard dark destructive red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 25 70% 25%;
-    --input: 25 70% 20%;
-    --ring: 25 74% 53%; /* Red-orange for rings */
+    --border: 212 65% 35%; /* Mid Dark Blue border */
+    --input: 212 65% 22%; /* Slightly Lighter Dark Blue for input background */
+    --ring: 217 91% 60%; /* Sky Blue for focus rings */
 
-    /* Sidebar dark variables - kept for consistency */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar Dark Theme */
+    --sidebar-background: 212 65% 10%; /* Very Dark Blue, slightly darker than main bg */
+    --sidebar-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 217 91% 60%; /* Sky Blue */
+    --sidebar-primary-foreground: 212 65% 5%; /* Darkest Blue */
+    --sidebar-accent: 212 65% 20%; /* Dark Blue, slightly lighter */
+    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-border: 212 65% 25%; /* Dark Blue border */
+    --sidebar-ring: 217 91% 60%; /* Sky Blue */
   }
 }
 
