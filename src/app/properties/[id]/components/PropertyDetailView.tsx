@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Tag, BedDouble, Bath, Maximize, LandPlot, Building, Home, Users, CalendarDays } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 type PropertyDetailViewProps = {
   property: Property;
@@ -18,6 +20,8 @@ type PropertyDetailViewProps = {
 export function PropertyDetailView({ property }: PropertyDetailViewProps) {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [clientFormattedPrice, setClientFormattedPrice] = useState<string | null>(null);
+  const { currentUser } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     // Format price on the client after hydration
@@ -56,6 +60,14 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
     return '';
   };
 
+  const handleBookSessionClick = () => {
+    if (currentUser) {
+      setIsBookingModalOpen(true);
+    } else {
+      router.push('/auth/login?redirect=/properties/' + property.id); // Optional: add redirect query param
+    }
+  };
+
   return (
     <>
       <div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
@@ -80,7 +92,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
           </div>
           
           <Button 
-            onClick={() => setIsBookingModalOpen(true)} 
+            onClick={handleBookSessionClick} 
             size="lg" 
             className="w-full md:w-auto text-sm sm:text-base lg:text-lg py-2.5 px-5 sm:py-3 sm:px-6 bg-accent hover:bg-accent/90"
           >
@@ -173,7 +185,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
       </div>
 
 
-      {isBookingModalOpen && (
+      {isBookingModalOpen && currentUser && ( // Only render modal if user is logged in and modal is open
         <BookingModal
           property={property}
           isOpen={isBookingModalOpen}
@@ -183,4 +195,3 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
     </>
   );
 }
-
