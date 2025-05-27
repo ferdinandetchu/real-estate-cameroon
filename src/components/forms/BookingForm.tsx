@@ -17,7 +17,7 @@ import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addHours, parseISO } from 'date-fns';
+import { format, addHours, parseISO, getDay, getDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { useAuth } from '@/contexts/AuthContext'; 
@@ -117,7 +117,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       propertyName: property.name,
       appointmentType: 'physical-viewing',
       meetingLocation: `Viewing for ${property.name} at ${property.address}`,
-      meetingDate: new Date(),
+      meetingDate: new Date(), // Default to today, calendar will handle disabling if not available
       meetingTime: "10:00",
       userName: currentUser?.displayName || currentUser?.email?.split('@')[0] || '', 
       userPhone: '', 
@@ -176,8 +176,8 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       const bookingId = await submitBookingRequest({
         propertyId: property.id,
         propertyName: data.propertyName,
-        propertyType: property.type, // Pass property type
-        propertyListingType: property.listingType, // Pass property listing type
+        propertyType: property.type,
+        propertyListingType: property.listingType,
         userId: currentUser.uid, 
         appointmentType: data.appointmentType as AppointmentType,
         appointmentPrice: appointmentPrice,
@@ -187,7 +187,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
         userPhone: data.userPhone,
         userEmail: data.userEmail,
         paymentMethod: appointmentPrice > 0 ? data.paymentMethod : undefined,
-        paymentStatus: appointmentPrice > 0 ? 'paid' : undefined, // Simulate payment as 'paid' for session fee
+        paymentStatus: appointmentPrice > 0 ? 'paid' : undefined, 
         cardNumber: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardNumber : undefined,
         cardExpiry: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardExpiry : undefined,
         cardCVC: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardCVC : undefined,
@@ -212,19 +212,21 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       toast({
         title: 'Booking Request Sent!',
         description: (
-          <div>
-            Your request (ID: {bookingId}) for {data.propertyName} has been submitted. We&apos;ll contact you soon.
-            <a
-              href={googleCalendarUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 mt-2 w-full sm:w-auto"
-            >
-              <CalendarPlus className="mr-2 h-4 w-4" /> Add to Google Calendar
-            </a>
+          <div className="space-y-2">
+            <p>Your request (ID: {bookingId}) for {data.propertyName} has been submitted. We&apos;ll contact you soon.</p>
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <a
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center"
+                >
+                <CalendarPlus className="mr-2 h-4 w-4" /> Add to Google Calendar
+                </a>
+            </Button>
           </div>
         ),
-        duration: 15000, 
+        duration: 20000, 
       });
       form.reset();
       if (onSuccess) onSuccess();
@@ -236,6 +238,43 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       });
     }
   }
+  
+  const isDateDisabled = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today to start of day for comparison
+
+    if (date < today) return true; // Disable past dates
+
+    const dayOfWeek = getDay(date); // Sunday = 0, Saturday = 6
+    if (dayOfWeek === 0 || dayOfWeek === 6) return true; // Disable weekends
+
+    // Simulate specific unavailable dates (e.g., 10th and 20th of current and next month)
+    // Note: getMonth() is 0-indexed (January is 0)
+    const currentMonth = getMonth(today);
+    const currentYear = getYear(today);
+    
+    const dateDay = getDate(date);
+    const dateMonth = getMonth(date);
+    const dateYear = getYear(date);
+
+    // Example: 10th and 20th of the current month are unavailable
+    if (dateYear === currentYear && dateMonth === currentMonth && (dateDay === 10 || dateDay === 20)) {
+      return true;
+    }
+    // Example: 15th of next month is unavailable
+    if (dateYear === currentYear && dateMonth === (currentMonth + 1) % 12 && dateDay === 15) {
+      // Handle year change for December -> January
+      if (currentMonth === 11 && dateYear !== currentYear + 1) return false; 
+      return true;
+    }
+     if (dateYear === (currentMonth === 11 ? currentYear + 1 : currentYear) && dateMonth === (currentMonth + 1) % 12 && dateDay === 15) {
+      return true;
+    }
+
+
+    return false; // Date is available
+  };
+
 
   return (
     <Form {...form}>
@@ -351,13 +390,14 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setDate(new Date().getDate() -1)) 
-                      }
+                      disabled={isDateDisabled}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                <FormDescription>
+                  Select an available date. Weekends and certain dates may be unavailable.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -374,6 +414,9 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                     <Input type="time" {...field} className="pl-10 h-10" />
                   </FormControl>
                 </div>
+                <FormDescription>
+                  Agent will confirm exact time based on availability for the chosen date.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -560,3 +603,4 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
     </Form>
   );
 }
+
