@@ -89,7 +89,7 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: errorMessage,
       });
-      setError(authError); 
+      setError(authError);
     } finally {
       setIsLoading(false);
     }
@@ -142,12 +142,13 @@ export default function LoginPage() {
                   <FormItem>
                     <div className="flex justify-between items-center">
                       <FormLabel>Password</FormLabel>
-                      <Link 
-                        href="/auth/reset-password" 
-                        passHref 
-                        legacyBehavior={isLoading || isGoogleLoading ? undefined : true} // Only use legacyBehavior if not disabled
+                      <Link
+                        href="/auth/reset-password"
+                        className={`text-sm font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}
+                        aria-disabled={isLoading || isGoogleLoading}
+                        onClick={(e) => { if (isLoading || isGoogleLoading) e.preventDefault(); }}
                       >
-                        <a className={`text-sm font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}>Forgot password?</a>
+                        Forgot password?
                       </Link>
                     </div>
                      <div className="relative">
@@ -179,8 +180,8 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link 
-              href="/auth/signup" 
+            <Link
+              href="/auth/signup"
               className={`font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}
               aria-disabled={isLoading || isGoogleLoading}
               onClick={(e) => { if (isLoading || isGoogleLoading) e.preventDefault(); }}
