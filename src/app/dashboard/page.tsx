@@ -21,17 +21,13 @@ export default function DashboardPage() {
   const [properties, setProperties] = React.useState<DashboardProperty[]>([]);
   const [bookings, setBookings] = React.useState<BookingRequest[]>([]);
   const [dataLoading, setDataLoading] = React.useState(true);
-  const [refreshKey, setRefreshKey] = React.useState(0); // Used to trigger data re-fetch
+  // refreshKey and handleRentalSuccess are removed as user cannot initiate rental from dashboard anymore
 
   React.useEffect(() => {
     if (!authLoading && !currentUser) {
       router.push('/auth/login?redirect=/dashboard');
     }
   }, [currentUser, authLoading, router]);
-
-  const handleRentalSuccess = () => {
-    setRefreshKey(prevKey => prevKey + 1); // Increment key to trigger re-fetch
-  };
 
   React.useEffect(() => {
     async function fetchData() {
@@ -50,13 +46,13 @@ export default function DashboardPage() {
           setDataLoading(false);
         }
       } else if (!authLoading) {
-        setDataLoading(false);
+        setDataLoading(false); // If no user and auth is done, stop data loading
       }
     }
     fetchData();
-  }, [currentUser, authLoading, refreshKey]); // Add refreshKey to dependency array
+  }, [currentUser, authLoading]); // Removed refreshKey from dependency array
 
-  if (authLoading || (!currentUser && !authLoading)) {
+  if (authLoading || (!currentUser && !authLoading)) { // Show skeleton if auth is loading or if no user and auth isn't finished
     return (
       <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
         <Skeleton className="h-8 w-1/3 mb-6" />
@@ -120,7 +116,8 @@ export default function DashboardPage() {
         ) : bookings.length > 0 ? (
           <div className="space-y-4">
             {bookings.map((booking) => (
-              <BookingListItem key={booking.id} booking={booking} onRentalSuccess={handleRentalSuccess} />
+              // Removed onRentalSuccess prop
+              <BookingListItem key={booking.id} booking={booking} />
             ))}
           </div>
         ) : (
