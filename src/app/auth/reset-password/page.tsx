@@ -98,7 +98,12 @@ export default function ResetPasswordPage() {
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Remember your password?{' '}
-            <Link href="/auth/login" className={`font-medium text-primary hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+            <Link 
+              href="/auth/login" 
+              className={`font-medium text-primary hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}
+              aria-disabled={isLoading}
+              onClick={(e) => { if (isLoading) e.preventDefault(); }}
+            >
               Log in
             </Link>
           </p>

@@ -82,7 +82,7 @@ export default function LoginPage() {
       const authError = error as AuthError;
       let errorMessage = authError.message || 'An unexpected error occurred during login.';
       if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid email or password.';
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       }
       toast({
         variant: 'destructive',
@@ -99,11 +99,11 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     setError(null);
     try {
-      // Pass redirectPath to signInWithGoogle in AuthContext
       await signInWithGoogle(redirectPath);
       // AuthContext now handles the redirect based on redirectPath or defaults to '/'
     } catch (error) {
       // Error is already toasted by signInWithGoogle in AuthContext
+      // No need to re-toast here
     } finally {
       setIsGoogleLoading(false);
     }
@@ -142,7 +142,11 @@ export default function LoginPage() {
                   <FormItem>
                     <div className="flex justify-between items-center">
                       <FormLabel>Password</FormLabel>
-                      <Link href="/auth/reset-password" passHref legacyBehavior>
+                      <Link 
+                        href="/auth/reset-password" 
+                        passHref 
+                        legacyBehavior={isLoading || isGoogleLoading ? undefined : true} // Only use legacyBehavior if not disabled
+                      >
                         <a className={`text-sm font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}>Forgot password?</a>
                       </Link>
                     </div>
@@ -175,7 +179,12 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col items-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className={`font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}>
+            <Link 
+              href="/auth/signup" 
+              className={`font-medium text-primary hover:underline ${isLoading || isGoogleLoading ? 'pointer-events-none opacity-50' : ''}`}
+              aria-disabled={isLoading || isGoogleLoading}
+              onClick={(e) => { if (isLoading || isGoogleLoading) e.preventDefault(); }}
+            >
               Sign up
             </Link>
           </p>
