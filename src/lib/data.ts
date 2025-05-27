@@ -1,6 +1,6 @@
 
-import type { Property, BookingRequest, PropertyType, PropertyLocation, ListingType, AppointmentType, PaymentMethod } from './types';
-import { format } from 'date-fns';
+import type { Property, BookingRequest, PropertyType, PropertyLocation, ListingType, AppointmentType, PaymentMethod, UserPropertyRental } from './types';
+import { format, addMonths, parseISO } from 'date-fns';
 
 const mockProperties: Property[] = [
   {
@@ -149,37 +149,43 @@ let mockBookingRequests: BookingRequest[] = [
     id: 'booking_1700000000000_abcdef1',
     propertyId: '1',
     propertyName: 'Spacious Villa in Buea',
-    userId: 'user123_mock', // Example userId
+    propertyType: 'house',
+    propertyListingType: 'sale',
+    userId: 'user123_mock', 
     appointmentType: 'physical-viewing',
     appointmentPrice: 5000,
-    meetingTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+    meetingTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), 
     meetingLocation: 'At the property: 123 Mountain View Rd, Buea',
     userName: 'Test User',
     userPhone: '+1234567890',
     userEmail: 'testuser@example.com',
     paymentMethod: 'creditCard',
-    paymentStatus: 'paid', // Assuming payment was made
+    paymentStatus: 'paid', 
     status: 'confirmed',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'booking_1700000000001_abcdef2',
-    propertyId: '5',
+    propertyId: '5', // Affordable House for Rent in Limbe
     propertyName: 'Affordable House for Rent in Limbe',
-    userId: 'user123_mock', // Example userId
+    propertyType: 'house',
+    propertyListingType: 'rent',
+    userId: 'user123_mock', 
     appointmentType: 'virtual-tour',
     appointmentPrice: 2500,
-    meetingTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    meetingTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), 
     meetingLocation: 'N/A (Virtual Tour)',
     userName: 'Test User',
     userPhone: '+1234567890',
     userEmail: 'testuser@example.com',
     paymentMethod: 'mobileMoney',
     paymentStatus: 'paid',
-    status: 'pending',
+    status: 'confirmed', // Changed to confirmed for "Rent Property" button testing
     createdAt: new Date().toISOString(),
   }
 ];
+
+let mockUserPropertyRentals: UserPropertyRental[] = [];
 
 
 export async function getProperties(filters?: {
@@ -190,9 +196,7 @@ export async function getProperties(filters?: {
   minPrice?: number;
   maxPrice?: number;
 }): Promise<Property[]> {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
-
   let filteredProperties = mockProperties;
 
   if (filters) {
@@ -220,69 +224,171 @@ export async function getProperties(filters?: {
       filteredProperties = filteredProperties.filter(p => p.price <= filters.maxPrice!);
     }
   }
-
   return filteredProperties;
 }
 
 export async function getPropertyById(id: string): Promise<Property | undefined> {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
   return mockProperties.find(p => p.id === id);
 }
 
 export async function getFeaturedProperties(): Promise<Property[]> {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 400));
   return mockProperties.filter(p => p.isFeatured);
 }
 
-type SubmitBookingRequestData = Omit<BookingRequest, 'id' | 'status' | 'createdAt'>;
+type SubmitBookingRequestData = Omit<BookingRequest, 'id' | 'status' | 'createdAt' | 'propertyType' | 'propertyListingType'> & {
+  propertyType: PropertyType;
+  propertyListingType: ListingType;
+};
+
 
 export async function submitBookingRequest(bookingData: SubmitBookingRequestData): Promise<string> {
-  // Simulate API delay and booking submission
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const fullBookingData: BookingRequest = {
     id: `booking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     ...bookingData,
-    status: 'pending', // Default status for new bookings
+    status: 'pending', 
     createdAt: new Date().toISOString(),
   };
   
-  mockBookingRequests.push(fullBookingData); // Add to our in-memory store
+  mockBookingRequests.push(fullBookingData); 
   console.log('Booking request submitted:', fullBookingData);
-  // In a real app, this would write to Firestore or a database.
   return fullBookingData.id;
 }
 
 
-// Simulated function to get properties for a user's dashboard
-export async function getUserDashboardProperties(userId: string): Promise<Property[]> {
+export async function getUserDashboardProperties(userId: string): Promise<(Property & { rentalDetails?: UserPropertyRental })[]> {
   await new Promise(resolve => setTimeout(resolve, 500));
-  // Simulate: return a few properties, as we don't have real ownership data
-  // In a real app, you'd query based on properties owned/rented by userId
-  console.log(`Fetching dashboard properties for userId: ${userId} (simulated)`);
-  return [mockProperties[0], mockProperties[4]]; // Example: returns the first and fifth property
+  console.log(`Fetching dashboard properties and rentals for userId: ${userId} (simulated)`);
+
+  // Simulate owned/listed properties (currently returning all featured for demo)
+  const ownedOrListedProperties = mockProperties.filter(p => p.isFeatured).map(p => ({ ...p })); 
+
+  // Get user's rentals
+  const userRentals = mockUserPropertyRentals.filter(rental => rental.userId === userId);
+
+  const combinedProperties: (Property & { rentalDetails?: UserPropertyRental })[] = [];
+
+  // Add properties that are rentals
+  for (const rental of userRentals) {
+    const propertyDetails = mockProperties.find(p => p.id === rental.propertyId);
+    if (propertyDetails) {
+      combinedProperties.push({
+        ...propertyDetails,
+        // Override price with rental price for consistency on dashboard if needed, or use rental.monthlyPrice
+        // price: rental.monthlyPrice, 
+        rentalDetails: rental,
+      });
+    }
+  }
+  
+  // Add other properties (owned/listed), ensuring no duplicates if a property is also in rentals
+  for (const prop of ownedOrListedProperties) {
+    if (!combinedProperties.some(cp => cp.id === prop.id)) {
+      combinedProperties.push(prop);
+    }
+  }
+  
+  // For demo, if current user has no properties/rentals, show some from user123_mock
+   if (combinedProperties.length === 0 && userId !== 'user123_mock') {
+    const mockUserRentalsForDemo = mockUserPropertyRentals.filter(r => r.userId === 'user123_mock');
+    const demoProperties: (Property & { rentalDetails?: UserPropertyRental })[] = [];
+     for (const rental of mockUserRentalsForDemo) {
+        const propertyDetails = mockProperties.find(p => p.id === rental.propertyId);
+        if (propertyDetails) {
+            demoProperties.push({
+                ...propertyDetails,
+                rentalDetails: {
+                    ...rental,
+                    propertyName: `${rental.propertyName} (Demo for ${userId})`
+                }
+            });
+        }
+    }
+     // Add a couple of non-rented properties for demo
+    const demoNonRented = mockProperties.slice(0,2).filter(p => !demoProperties.some(dp => dp.id === p.id));
+    demoNonRented.forEach(p => demoProperties.push({...p, name: `${p.name} (Demo for ${userId})`}));
+    return demoProperties;
+  }
+
+
+  return combinedProperties;
 }
 
-// Simulated function to get bookings for a user's dashboard
 export async function getUserDashboardBookings(userId: string): Promise<BookingRequest[]> {
   await new Promise(resolve => setTimeout(resolve, 500));
-  // Simulate: filter mockBookingRequests by userId
-  // This relies on userId being correctly passed and stored during booking submission.
   const userBookings = mockBookingRequests.filter(booking => booking.userId === userId);
   console.log(`Fetching dashboard bookings for userId: ${userId}, found: ${userBookings.length} (simulated)`);
   
-  // For demonstration, if no bookings match the current userId, add some for 'user123_mock'
-  // This ensures the dashboard always shows some booking data for testing the UI.
-  // In a real app, you would just return the actual userBookings.
   if (userBookings.length === 0 && userId !== 'user123_mock') {
     return mockBookingRequests.filter(booking => booking.userId === 'user123_mock').map(b => ({
       ...b, 
-      // Make it clear this is for demonstration
       propertyName: `${b.propertyName} (Demo for ${userId})` 
     }));
   }
   return userBookings;
 }
 
+export async function rentPropertyAfterBooking(
+  userId: string,
+  booking: BookingRequest,
+  monthsToRent: number
+): Promise<UserPropertyRental | null> {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const property = await getPropertyById(booking.propertyId);
+
+  if (!property || property.listingType !== 'rent' || !property.price) {
+    console.error('Property not found, not for rent, or price is missing.');
+    return null;
+  }
+  // For guesthouses/hotels, price is per night, so "monthsToRent" logic might differ.
+  // For simplicity, we assume monthly rental for 'house' and 'land' here.
+  // A more complex system would handle daily rates for guesthouses/hotels.
+  let monthlyPrice = property.price;
+  if (property.type === 'guesthouse' || property.type === 'hotel') {
+    // This is a simplification; true monthly rates for hotels are complex.
+    // Assuming price is daily, and we're asked to rent for X "months" (interpreted as X * 30 days)
+    // This part of the logic might need significant refinement for real-world hotel/guesthouse monthly stays.
+    // For now, let's assume it's not applicable or use a placeholder.
+    // Or, disallow "renting" guesthouses/hotels through this specific "X months" flow.
+    // Let's restrict this simplified flow to house/land for monthly rentals for now.
+    if (property.type !== 'house' && property.type !== 'land') {
+        console.warn(`Monthly rental simulation not directly applicable for ${property.type}. Using property price as flat fee for now.`);
+        // Or return null / throw error if this flow isn't for guesthouses/hotels
+    }
+  }
+
+
+  const rentStartDate = new Date();
+  const rentEndDate = addMonths(rentStartDate, monthsToRent);
+
+  const newRental: UserPropertyRental = {
+    id: `rental_${property.id}_${userId}_${Date.now()}`,
+    userId,
+    propertyId: property.id,
+    propertyName: property.name,
+    propertyAddress: property.address,
+    propertyImageUrl: property.images[0]?.url,
+    rentStartDate: rentStartDate.toISOString(),
+    rentEndDate: rentEndDate.toISOString(),
+    monthsPaid: monthsToRent,
+    monthlyPrice: monthlyPrice,
+    currency: property.currency,
+    createdAt: new Date().toISOString(),
+    bookingId: booking.id,
+  };
+
+  mockUserPropertyRentals.push(newRental);
+
+  // Update booking status
+  const bookingIndex = mockBookingRequests.findIndex(b => b.id === booking.id);
+  if (bookingIndex !== -1) {
+    mockBookingRequests[bookingIndex].status = 'completed';
+    mockBookingRequests[bookingIndex].rentalId = newRental.id;
+  }
+
+  console.log('Property rented (simulated):', newRental);
+  return newRental;
+}

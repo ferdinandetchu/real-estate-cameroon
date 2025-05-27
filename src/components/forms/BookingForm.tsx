@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { submitBookingRequest } from '@/lib/data';
-import type { Property, AppointmentType, PaymentMethod } from '@/lib/types';
+import type { Property, AppointmentType, PaymentMethod, PropertyType, ListingType } from '@/lib/types';
 import { appointmentTypes, paymentMethods } from '@/lib/types';
 import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye, Video, Briefcase, CreditCard, Smartphone, CheckCircle2, CalendarPlus } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -162,17 +162,23 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
 
 
   async function onSubmit(data: BookingFormValues) {
+    if (!currentUser) {
+      toast({ title: "Authentication Error", description: "You must be logged in to book a session.", variant: "destructive"});
+      return;
+    }
     try {
       const meetingDateTimeCombined = new Date(data.meetingDate);
       const [hours, minutes] = data.meetingTime.split(':').map(Number);
-      meetingDateTimeCombined.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0 for consistency
+      meetingDateTimeCombined.setHours(hours, minutes, 0, 0);
 
       const appointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price ?? 0;
 
       const bookingId = await submitBookingRequest({
         propertyId: property.id,
         propertyName: data.propertyName,
-        userId: currentUser?.uid, 
+        propertyType: property.type, // Pass property type
+        propertyListingType: property.listingType, // Pass property listing type
+        userId: currentUser.uid, 
         appointmentType: data.appointmentType as AppointmentType,
         appointmentPrice: appointmentPrice,
         meetingTime: meetingDateTimeCombined.toISOString(),
@@ -181,16 +187,16 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
         userPhone: data.userPhone,
         userEmail: data.userEmail,
         paymentMethod: appointmentPrice > 0 ? data.paymentMethod : undefined,
+        paymentStatus: appointmentPrice > 0 ? 'paid' : undefined, // Simulate payment as 'paid' for session fee
         cardNumber: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardNumber : undefined,
         cardExpiry: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardExpiry : undefined,
         cardCVC: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardCVC : undefined,
         mobileMoneyNumber: appointmentPrice > 0 && data.paymentMethod === 'mobileMoney' ? data.mobileMoneyNumber : undefined,
       });
 
-      // Google Calendar Link Generation
       const eventTitle = encodeURIComponent(`Booking: ${property.name}`);
       const eventStartTime = parseISO(meetingDateTimeCombined.toISOString());
-      const eventEndTime = addHours(eventStartTime, 1); // Assume 1 hour duration
+      const eventEndTime = addHours(eventStartTime, 1); 
       
       const formatForGoogleCalendar = (date: Date) => format(date, "yyyyMMdd'T'HHmmss'Z'");
       const googleStartTime = formatForGoogleCalendar(eventStartTime);
@@ -207,7 +213,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
         title: 'Booking Request Sent!',
         description: (
           <div>
-            Your request (ID: {bookingId}) for {data.propertyName} has been submitted. We'll contact you soon.
+            Your request (ID: {bookingId}) for {data.propertyName} has been submitted. We&apos;ll contact you soon.
             <a
               href={googleCalendarUrl}
               target="_blank"
@@ -218,7 +224,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
             </a>
           </div>
         ),
-        duration: 15000, // Keep toast longer as it has an action
+        duration: 15000, 
       });
       form.reset();
       if (onSuccess) onSuccess();
@@ -257,7 +263,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
               <Select onValueChange={(value) => {
                 field.onChange(value);
                 if (value !== 'physical-viewing') {
-                  form.setValue('meetingLocation', ''); // Clear meeting location if not physical
+                  form.setValue('meetingLocation', ''); 
                 } else {
                   form.setValue('meetingLocation', `Viewing for ${property.name} at ${property.address}`);
                 }
@@ -304,7 +310,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
               </ul>
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground/90">Price:</p>
+              <p className="text-sm font-medium text-foreground/90">Price for Session:</p>
               <p className="text-lg font-semibold text-accent">
                 {clientFormattedAppointmentPrice || `${currentAppointmentDetails.price} XAF`}
               </p>
@@ -388,7 +394,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                   </FormControl>
                 </div>
                 <FormDescription>
-                  Only required for physical viewings.
+                  Only required for physical viewings. Our agent will confirm the exact meeting point.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -451,9 +457,9 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
         {currentAppointmentPrice > 0 && (
           <>
             <Separator className="my-6" />
-            <h3 className="text-lg font-medium">Payment Information</h3>
+            <h3 className="text-lg font-medium">Payment for Session Booking</h3>
             <p className="text-sm text-muted-foreground">
-              Secure your booking by providing payment details. Amount: <span className="font-semibold text-accent">{clientFormattedAppointmentPrice || `${currentAppointmentPrice} XAF`}</span>.
+              Secure your booking session by providing payment details. Amount: <span className="font-semibold text-accent">{clientFormattedAppointmentPrice || `${currentAppointmentPrice} XAF`}</span>.
             </p>
             <FormField
               control={form.control}
