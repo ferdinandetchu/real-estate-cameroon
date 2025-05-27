@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PropertyDetailPageProps) {
     };
   }
   return {
-    title: `${property.name} - Crown Homes`,
+    title: `${property.name} - Property Get`,
     description: property.description.substring(0, 160),
   };
 }

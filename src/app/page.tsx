@@ -65,7 +65,7 @@ export default function HomePage() {
           </div>
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-primary">
-            Discover Your Dream Property with Crown Homes
+            Discover Your Dream Property with Property Get
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-foreground/80 mb-8 sm:mb-10 max-w-md sm:max-w-xl md:max-w-2xl mx-auto">
             Explore a wide range of houses, lands, guesthouses, and hotels in Buea, Limbe, Douala, and beyond.
@@ -87,7 +87,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10 md:mb-12 text-primary">
-            Why Choose Crown Homes?
+            Why Choose Property Get?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
             {benefits.map((benefit) => (
