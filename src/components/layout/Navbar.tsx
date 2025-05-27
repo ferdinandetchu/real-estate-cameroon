@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -89,6 +89,12 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
                 {/* <DropdownMenuItem asChild>
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
@@ -151,6 +157,11 @@ export function Navbar() {
                           <p className="text-xs text-muted-foreground">{currentUser.email}</p>
                         </div>
                       </div>
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                        </Link>
+                      </Button>
                       {/* <Button variant="outline" className="w-full" asChild><Link href="/profile">Profile</Link></Button> */}
                       <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" /> Log out

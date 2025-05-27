@@ -1,5 +1,6 @@
 
 import type { Property, BookingRequest, PropertyType, PropertyLocation, ListingType, AppointmentType, PaymentMethod } from './types';
+import { format } from 'date-fns';
 
 const mockProperties: Property[] = [
   {
@@ -22,7 +23,7 @@ const mockProperties: Property[] = [
       { url: 'https://images.unsplash.com/photo-1666228459069-d308cbea796b', alt: 'Garden view', hint: 'lush garden' },
     ],
     isFeatured: true,
-    agent: { name: 'John Doe', phone: '+237670000001', email: 'john.doe@cameroonestates.com' },
+    agent: { name: 'John Doe', phone: '+237670000001', email: 'john.doe@propertyget.com' },
   },
   {
     id: '2',
@@ -41,7 +42,7 @@ const mockProperties: Property[] = [
       { url: 'https://placehold.co/800x600.png', alt: 'Nearby coastline', hint: 'coastal landscape' },
     ],
     isFeatured: true,
-    agent: { name: 'Jane Smith', phone: '+237670000002', email: 'jane.smith@cameroonestates.com' },
+    agent: { name: 'Jane Smith', phone: '+237670000002', email: 'jane.smith@propertyget.com' },
   },
   {
     id: '3',
@@ -59,7 +60,7 @@ const mockProperties: Property[] = [
       { url: 'https://placehold.co/800x600.png', alt: 'Guesthouse exterior', hint: 'charming guesthouse' },
       { url: 'https://placehold.co/800x600.png', alt: 'Sample room', hint: 'cozy bedroom' },
     ],
-    agent: { name: 'Michael B.', phone: '+237670000003', email: 'michael.b@cameroonestates.com' },
+    agent: { name: 'Michael B.', phone: '+237670000003', email: 'michael.b@propertyget.com' },
   },
   {
     id: '4',
@@ -99,7 +100,7 @@ const mockProperties: Property[] = [
       { url: 'https://placehold.co/800x600.png', alt: 'House exterior', hint: 'simple house' },
       { url: 'https://placehold.co/800x600.png', alt: 'Living area', hint: 'modest living room' },
     ],
-    agent: { name: 'Peter K.', phone: '+237670000005', email: 'peter.k@cameroonestates.com' },
+    agent: { name: 'Peter K.', phone: '+237670000005', email: 'peter.k@propertyget.com' },
   },
     {
     id: '6',
@@ -141,6 +142,45 @@ const mockProperties: Property[] = [
     agent: { name: 'Buea Rentals Co.', phone: '+237670000007', email: 'rentals@bueaproperties.com' },
   },
 ];
+
+// Simulated in-memory store for booking requests
+let mockBookingRequests: BookingRequest[] = [
+  {
+    id: 'booking_1700000000000_abcdef1',
+    propertyId: '1',
+    propertyName: 'Spacious Villa in Buea',
+    userId: 'user123_mock', // Example userId
+    appointmentType: 'physical-viewing',
+    appointmentPrice: 5000,
+    meetingTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+    meetingLocation: 'At the property: 123 Mountain View Rd, Buea',
+    userName: 'Test User',
+    userPhone: '+1234567890',
+    userEmail: 'testuser@example.com',
+    paymentMethod: 'creditCard',
+    paymentStatus: 'paid', // Assuming payment was made
+    status: 'confirmed',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'booking_1700000000001_abcdef2',
+    propertyId: '5',
+    propertyName: 'Affordable House for Rent in Limbe',
+    userId: 'user123_mock', // Example userId
+    appointmentType: 'virtual-tour',
+    appointmentPrice: 2500,
+    meetingTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    meetingLocation: 'N/A (Virtual Tour)',
+    userName: 'Test User',
+    userPhone: '+1234567890',
+    userEmail: 'testuser@example.com',
+    paymentMethod: 'mobileMoney',
+    paymentStatus: 'paid',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  }
+];
+
 
 export async function getProperties(filters?: {
   type?: PropertyType | 'all';
@@ -205,12 +245,44 @@ export async function submitBookingRequest(bookingData: SubmitBookingRequestData
   const fullBookingData: BookingRequest = {
     id: `booking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     ...bookingData,
-    status: 'pending',
+    status: 'pending', // Default status for new bookings
     createdAt: new Date().toISOString(),
   };
   
+  mockBookingRequests.push(fullBookingData); // Add to our in-memory store
   console.log('Booking request submitted:', fullBookingData);
-  // In a real app, this would write to Firestore.
+  // In a real app, this would write to Firestore or a database.
   return fullBookingData.id;
+}
+
+
+// Simulated function to get properties for a user's dashboard
+export async function getUserDashboardProperties(userId: string): Promise<Property[]> {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // Simulate: return a few properties, as we don't have real ownership data
+  // In a real app, you'd query based on properties owned/rented by userId
+  console.log(`Fetching dashboard properties for userId: ${userId} (simulated)`);
+  return [mockProperties[0], mockProperties[4]]; // Example: returns the first and fifth property
+}
+
+// Simulated function to get bookings for a user's dashboard
+export async function getUserDashboardBookings(userId: string): Promise<BookingRequest[]> {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // Simulate: filter mockBookingRequests by userId
+  // This relies on userId being correctly passed and stored during booking submission.
+  const userBookings = mockBookingRequests.filter(booking => booking.userId === userId);
+  console.log(`Fetching dashboard bookings for userId: ${userId}, found: ${userBookings.length} (simulated)`);
+  
+  // For demonstration, if no bookings match the current userId, add some for 'user123_mock'
+  // This ensures the dashboard always shows some booking data for testing the UI.
+  // In a real app, you would just return the actual userBookings.
+  if (userBookings.length === 0 && userId !== 'user123_mock') {
+    return mockBookingRequests.filter(booking => booking.userId === 'user123_mock').map(b => ({
+      ...b, 
+      // Make it clear this is for demonstration
+      propertyName: `${b.propertyName} (Demo for ${userId})` 
+    }));
+  }
+  return userBookings;
 }
 

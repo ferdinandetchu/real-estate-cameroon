@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
+import { useAuth } from '@/contexts/AuthContext'; // Added for userId
 
 const appointmentTypeDetailsMap: Record<AppointmentType, {
   label: string;
@@ -109,6 +110,7 @@ type BookingFormProps = {
 
 export function BookingForm({ property, onSuccess }: BookingFormProps) {
   const { toast } = useToast();
+  const { currentUser } = useAuth(); // Get current user
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -117,9 +119,9 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       meetingLocation: `Viewing for ${property.name} at ${property.address}`,
       meetingDate: new Date(),
       meetingTime: "10:00",
-      userName: '',
-      userPhone: '',
-      userEmail: '',
+      userName: currentUser?.displayName || currentUser?.email?.split('@')[0] || '', // Pre-fill if user logged in
+      userPhone: '', // Could be pre-filled from user profile if available
+      userEmail: currentUser?.email || '', // Pre-fill if user logged in
       paymentMethod: 'creditCard',
       cardNumber: '',
       cardExpiry: '',
@@ -151,6 +153,14 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
     }
   }, [currentAppointmentDetails]);
 
+  React.useEffect(() => {
+    // Pre-fill user details if currentUser changes (e.g., after modal opens and auth state loads)
+    if (currentUser) {
+      form.setValue('userName', currentUser.displayName || currentUser.email?.split('@')[0] || '');
+      form.setValue('userEmail', currentUser.email || '');
+    }
+  }, [currentUser, form]);
+
 
   async function onSubmit(data: BookingFormValues) {
     try {
@@ -163,6 +173,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       const bookingId = await submitBookingRequest({
         propertyId: property.id,
         propertyName: data.propertyName,
+        userId: currentUser?.uid, // Add userId
         appointmentType: data.appointmentType as AppointmentType,
         appointmentPrice: appointmentPrice,
         meetingTime: meetingDateTime.toISOString(),

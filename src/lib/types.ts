@@ -48,6 +48,7 @@ export type BookingRequest = {
   id: string;
   propertyId: string;
   propertyName: string;
+  userId?: string; // Added to associate booking with a user
   appointmentType: AppointmentType;
   appointmentPrice: number; // Price for the selected appointment type
   meetingTime: string; // Store as ISO string or suitable string format
