@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -46,6 +46,9 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { login, signInWithGoogle, setError } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect');
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -57,16 +60,24 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
 
+  const handleSuccessfulLogin = () => {
+    toast({
+      title: 'Login Successful',
+      description: 'Welcome back!',
+    });
+    if (redirectPath && redirectPath.startsWith('/')) {
+      router.push(redirectPath);
+    } else {
+      router.push('/');
+    }
+  };
+
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     setError(null);
     try {
       await login(data.email, data.password);
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back!',
-      });
-      router.push('/'); // Redirect to homepage or dashboard
+      handleSuccessfulLogin();
     } catch (error) {
       const authError = error as AuthError;
       let errorMessage = authError.message || 'An unexpected error occurred during login.';
@@ -78,7 +89,7 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: errorMessage,
       });
-      setError(authError); // Store error in context if needed elsewhere
+      setError(authError); 
     } finally {
       setIsLoading(false);
     }
@@ -88,12 +99,14 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     setError(null);
     try {
+      // The signInWithGoogle function in AuthContext handles the redirect.
+      // We just need to ensure it's called and loading state is managed.
       await signInWithGoogle();
-      // Successful Google sign-in is handled by AuthContext's onAuthStateChanged or the signInWithGoogle promise
-      // Redirect will happen from AuthContext or here if needed
+      // If signInWithGoogle itself doesn't redirect (e.g., if an error is caught and re-thrown before redirect),
+      // we might need to call handleSuccessfulLogin here, but AuthContext's version currently redirects.
+      // For now, we assume AuthContext handles the success redirect.
     } catch (error) {
       // Error is already toasted by signInWithGoogle in AuthContext
-      // but we ensure loading state is reset.
     } finally {
       setIsGoogleLoading(false);
     }
