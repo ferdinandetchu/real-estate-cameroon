@@ -99,12 +99,9 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     setError(null);
     try {
-      // The signInWithGoogle function in AuthContext handles the redirect.
-      // We just need to ensure it's called and loading state is managed.
-      await signInWithGoogle();
-      // If signInWithGoogle itself doesn't redirect (e.g., if an error is caught and re-thrown before redirect),
-      // we might need to call handleSuccessfulLogin here, but AuthContext's version currently redirects.
-      // For now, we assume AuthContext handles the success redirect.
+      // Pass redirectPath to signInWithGoogle in AuthContext
+      await signInWithGoogle(redirectPath);
+      // AuthContext now handles the redirect based on redirectPath or defaults to '/'
     } catch (error) {
       // Error is already toasted by signInWithGoogle in AuthContext
     } finally {

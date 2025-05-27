@@ -25,7 +25,7 @@ interface AuthContextType {
   signup: typeof createUserWithEmailAndPassword;
   login: typeof signInWithEmailAndPassword;
   logout: typeof signOut;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (redirectPath?: string | null) => Promise<void>; // Modified to accept redirectPath
   resetPassword: typeof sendPasswordResetEmail;
 }
 
@@ -84,13 +84,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     router.push('/auth/login');
   };
 
-  const wrappedSignInWithGoogle = async () => {
+  const wrappedSignInWithGoogle = async (redirectPath?: string | null) => {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       setCurrentUser(result.user);
       toast({ title: 'Signed In', description: 'Successfully signed in with Google.' });
-      router.push('/');
+      if (redirectPath && redirectPath.startsWith('/')) {
+        router.push(redirectPath);
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       handleAuthError(err, 'Failed to sign in with Google.');
       // Let the calling component handle its own isLoading state

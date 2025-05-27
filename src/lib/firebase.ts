@@ -8,12 +8,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 // Your web app's Firebase configuration
 // IMPORTANT: Replace these with your actual Firebase project configuration!
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA_aLcWdhJFUC_AexgpqZa44dyAz-q0ueg",
+  authDomain: "real-estate-cameroon-924d3.firebaseapp.com",
+  projectId: "real-estate-cameroon-924d3",
+  storageBucket: "real-estate-cameroon-924d3.firebasestorage.app",
+  messagingSenderId: "315893613776",
+  appId: "1:315893613776:web:063218ae7b7d9faea58ad5",
+  measurementId: "G-TTG1208PG6"
 };
 
 // Initialize Firebase
