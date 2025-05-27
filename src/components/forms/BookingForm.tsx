@@ -79,7 +79,19 @@ const bookingFormSchema = z.object({
 }).refine(data => data.appointmentType === 'physical-viewing' ? !!data.meetingLocation : true, {
   message: "Meeting location is required for physical viewings.",
   path: ["meetingLocation"],
-}).superRefine((data, ctx) => {
+}).refine(data => {
+    const [hours, minutes] = data.meetingTime.split(':').map(Number);
+    // Check if hours or minutes are NaN (e.g. if regex failed but somehow passed)
+    if (isNaN(hours) || isNaN(minutes)) return false; 
+    const selectedTotalMinutes = hours * 60 + minutes;
+    const startTimeTotalMinutes = 9 * 60; // 09:00
+    const endTimeTotalMinutes = 17 * 60; // 17:00
+    return selectedTotalMinutes >= startTimeTotalMinutes && selectedTotalMinutes <= endTimeTotalMinutes;
+  }, {
+  message: "Preferred time should be between 09:00 and 17:00.",
+  path: ["meetingTime"],
+})
+.superRefine((data, ctx) => {
   const selectedAppointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price;
   if (selectedAppointmentPrice > 0) { 
     if (data.paymentMethod === 'creditCard') {
@@ -117,8 +129,8 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       propertyName: property.name,
       appointmentType: 'physical-viewing',
       meetingLocation: `Viewing for ${property.name} at ${property.address}`,
-      meetingDate: new Date(), // Default to today, calendar will handle disabling if not available
-      meetingTime: "10:00",
+      meetingDate: new Date(), 
+      meetingTime: "10:00", // Default time within 09:00-17:00
       userName: currentUser?.displayName || currentUser?.email?.split('@')[0] || '', 
       userPhone: '', 
       userEmail: currentUser?.email || '', 
@@ -241,15 +253,13 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
   
   const isDateDisabled = (date: Date): boolean => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today to start of day for comparison
+    today.setHours(0, 0, 0, 0); 
 
-    if (date < today) return true; // Disable past dates
+    if (date < today) return true; 
 
-    const dayOfWeek = getDay(date); // Sunday = 0, Saturday = 6
-    if (dayOfWeek === 0 || dayOfWeek === 6) return true; // Disable weekends
+    const dayOfWeek = getDay(date); 
+    if (dayOfWeek === 0 || dayOfWeek === 6) return true; 
 
-    // Simulate specific unavailable dates (e.g., 10th and 20th of current and next month)
-    // Note: getMonth() is 0-indexed (January is 0)
     const currentMonth = getMonth(today);
     const currentYear = getYear(today);
     
@@ -257,22 +267,18 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
     const dateMonth = getMonth(date);
     const dateYear = getYear(date);
 
-    // Example: 10th and 20th of the current month are unavailable
     if (dateYear === currentYear && dateMonth === currentMonth && (dateDay === 10 || dateDay === 20)) {
       return true;
     }
-    // Example: 15th of next month is unavailable
-    if (dateYear === currentYear && dateMonth === (currentMonth + 1) % 12 && dateDay === 15) {
-      // Handle year change for December -> January
-      if (currentMonth === 11 && dateYear !== currentYear + 1) return false; 
-      return true;
-    }
-     if (dateYear === (currentMonth === 11 ? currentYear + 1 : currentYear) && dateMonth === (currentMonth + 1) % 12 && dateDay === 15) {
+    
+    const nextMonthDateYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+    const nextMonth = (currentMonth + 1) % 12;
+
+    if (dateYear === nextMonthDateYear && dateMonth === nextMonth && dateDay === 15) {
       return true;
     }
 
-
-    return false; // Date is available
+    return false; 
   };
 
 
@@ -396,7 +402,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                   </PopoverContent>
                 </Popover>
                 <FormDescription>
-                  Select an available date. Weekends and certain dates may be unavailable.
+                  Select an available date. Weekends and certain public holidays may be unavailable.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -415,7 +421,7 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
                   </FormControl>
                 </div>
                 <FormDescription>
-                  Agent will confirm exact time based on availability for the chosen date.
+                  Select a time between 09:00 and 17:00. Agent will confirm exact time based on availability.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -604,3 +610,5 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
   );
 }
 
+
+    
