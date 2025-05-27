@@ -2,16 +2,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Property } from '@/lib/types';
+import type { Property, BookingRequest } from '@/lib/types';
 import { PropertyImageGallery } from '@/components/properties/PropertyImageGallery';
 import { BookingModal } from '@/components/modals/BookingModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Tag, BedDouble, Bath, Maximize, LandPlot, Building, Home, Users, CalendarDays } from 'lucide-react';
+import { MapPin, Tag, BedDouble, Bath, Maximize, LandPlot, Building, Home, Users, CalendarDays, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { getUserDashboardBookings } from '@/lib/data'; // Import the data fetching function
 
 type PropertyDetailViewProps = {
   property: Property;
@@ -22,6 +23,9 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
   const [clientFormattedPrice, setClientFormattedPrice] = useState<string | null>(null);
   const { currentUser } = useAuth();
   const router = useRouter();
+
+  const [showMapSection, setShowMapSection] = useState(false);
+  const [checkingBookings, setCheckingBookings] = useState(false);
 
   useEffect(() => {
     // Format price on the client after hydration
@@ -35,6 +39,33 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
       setClientFormattedPrice(`${property.price} ${property.currency}`);
     }
   }, [property.price, property.currency]);
+
+  useEffect(() => {
+    const checkUserBookings = async () => {
+      if (currentUser && property) {
+        setCheckingBookings(true);
+        setShowMapSection(false); // Reset while checking
+        try {
+          const bookings = await getUserDashboardBookings(currentUser.uid);
+          const hasConfirmedBookingForProperty = bookings.some(
+            (booking) => booking.propertyId === property.id && booking.status === 'confirmed'
+          );
+          setShowMapSection(hasConfirmedBookingForProperty);
+        } catch (error) {
+          console.error("Failed to check user bookings for map display:", error);
+          setShowMapSection(false); // Default to not showing map on error
+        } finally {
+          setCheckingBookings(false);
+        }
+      } else {
+        setShowMapSection(false); // No user, no map shown based on prior bookings
+        setCheckingBookings(false);
+      }
+    };
+
+    checkUserBookings();
+  }, [currentUser, property]);
+
 
   const getPropertyTypeIcon = (type: Property['type']) => {
     switch (type) {
@@ -64,7 +95,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
     if (currentUser) {
       setIsBookingModalOpen(true);
     } else {
-      router.push('/auth/login?redirect=/properties/' + property.id); // Optional: add redirect query param
+      router.push('/auth/login?redirect=/properties/' + property.id); 
     }
   };
 
@@ -80,9 +111,14 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
           </Badge>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">{property.name}</h1>
           
-          <div className="flex items-center text-muted-foreground text-sm sm:text-base">
-            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
-            <span>{property.address}, {property.location}</span>
+          <div className="text-sm sm:text-base text-muted-foreground">
+            <div className="flex items-start">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary mt-1 shrink-0" />
+                <div>
+                    <p>{property.address}</p>
+                    <p>{property.location}</p>
+                </div>
+            </div>
           </div>
 
           <div className="text-2xl sm:text-3xl font-bold text-accent flex items-center">
@@ -148,31 +184,44 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
         )}
       
         <Separator className="my-6 sm:my-8" />
-
-        <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4">Location on Map</h2>
-          <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden shadow flex items-center justify-center">
-            {/* Placeholder for an embedded map. In a real app, integrate a map component here. */}
-            <Image 
-              src={`https://placehold.co/800x450.png?text=${encodeURIComponent('Map: ' + property.address)}`} 
-              alt={`Map showing approximate location of ${property.name}`}
-              width={800}
-              height={450}
-              className="object-cover w-full h-full"
-              data-ai-hint="map location"
-            />
+        
+        {checkingBookings ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-3 text-muted-foreground">Checking booking status for map...</p>
           </div>
-          <Button asChild variant="outline">
-            <a 
-              href={`https://maps.google.com/?q=${encodeURIComponent(property.address + ', ' + property.location)}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center"
-            >
-              <MapPin className="mr-2 h-4 w-4" /> View on Google Maps
-            </a>
-          </Button>
-        </div>
+        ) : showMapSection ? (
+          <div>
+            <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4">Location on Map</h2>
+            <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden shadow flex items-center justify-center">
+              <Image 
+                src={`https://placehold.co/800x450.png?text=${encodeURIComponent('Map: ' + property.address)}`} 
+                alt={`Map showing approximate location of ${property.name}`}
+                width={800}
+                height={450}
+                className="object-cover w-full h-full"
+                data-ai-hint="map location"
+              />
+            </div>
+            <Button asChild variant="outline">
+              <a 
+                href={`https://maps.google.com/?q=${encodeURIComponent(property.address + ', ' + property.location)}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center"
+              >
+                <MapPin className="mr-2 h-4 w-4" /> View on Google Maps
+              </a>
+            </Button>
+          </div>
+        ) : (
+          <div className="py-4 text-center text-muted-foreground bg-card border rounded-md p-4">
+            <MapPin className="w-8 h-8 mx-auto mb-2 text-primary" />
+            <p className="font-semibold">Map information is available after confirming your booking.</p>
+            <p className="text-sm">This helps maintain privacy and security for our property owners.</p>
+          </div>
+        )}
+
 
         <Separator className="my-6 sm:my-8" />
 
@@ -185,7 +234,7 @@ export function PropertyDetailView({ property }: PropertyDetailViewProps) {
       </div>
 
 
-      {isBookingModalOpen && currentUser && ( // Only render modal if user is logged in and modal is open
+      {isBookingModalOpen && currentUser && ( 
         <BookingModal
           property={property}
           isOpen={isBookingModalOpen}

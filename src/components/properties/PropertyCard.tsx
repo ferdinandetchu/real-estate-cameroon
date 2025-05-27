@@ -64,8 +64,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {property.name}
           </Link>
         </CardTitle>
-        <div className="text-xs sm:text-sm text-muted-foreground mb-2 flex items-center">
-          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> {property.location}
+        <div className="text-xs sm:text-sm text-muted-foreground mb-1 flex items-start">
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 mt-0.5 shrink-0" /> 
+          <div>
+            <p>{property.address}</p>
+            <p>{property.location}</p>
+          </div>
         </div>
         <p className="text-xs sm:text-sm text-foreground/80 line-clamp-2 mb-3">{property.description}</p>
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
@@ -102,4 +106,3 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </Card>
   );
 }
-

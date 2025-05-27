@@ -13,14 +13,14 @@ import { useToast } from '@/hooks/use-toast';
 import { submitBookingRequest } from '@/lib/data';
 import type { Property, AppointmentType, PaymentMethod } from '@/lib/types';
 import { appointmentTypes, paymentMethods } from '@/lib/types';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye, Video, Briefcase, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, PhoneIcon, MailIcon, Eye, Video, Briefcase, CreditCard, Smartphone, CheckCircle2, CalendarPlus } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { format, addHours, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
-import { useAuth } from '@/contexts/AuthContext'; // Added for userId
+import { useAuth } from '@/contexts/AuthContext'; 
 
 const appointmentTypeDetailsMap: Record<AppointmentType, {
   label: string;
@@ -45,7 +45,7 @@ const appointmentTypeDetailsMap: Record<AppointmentType, {
   },
   'phone-consultation': {
     label: 'Phone Consultation',
-    icon: PhoneIcon, // Using PhoneIcon as it's common for calls
+    icon: PhoneIcon, 
     benefits: ['Discuss property details with an agent.', 'Clarify doubts and get advice.', 'Quick and convenient.'],
     price: 0,
     priceDescription: 'Initial consultation is free.',
@@ -73,7 +73,7 @@ const bookingFormSchema = z.object({
   userEmail: z.string().email({ message: 'Invalid email address.' }),
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method."}),
   cardNumber: z.string().optional(),
-  cardExpiry: z.string().optional(), // MM/YY
+  cardExpiry: z.string().optional(), 
   cardCVC: z.string().optional(),
   mobileMoneyNumber: z.string().optional(),
 }).refine(data => data.appointmentType === 'physical-viewing' ? !!data.meetingLocation : true, {
@@ -81,7 +81,7 @@ const bookingFormSchema = z.object({
   path: ["meetingLocation"],
 }).superRefine((data, ctx) => {
   const selectedAppointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price;
-  if (selectedAppointmentPrice > 0) { // Only validate payment if there's a cost
+  if (selectedAppointmentPrice > 0) { 
     if (data.paymentMethod === 'creditCard') {
       if (!data.cardNumber || !/^\d{13,19}$/.test(data.cardNumber.replace(/\s/g, ''))) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid card number (13-19 digits).", path: ["cardNumber"] });
@@ -110,7 +110,7 @@ type BookingFormProps = {
 
 export function BookingForm({ property, onSuccess }: BookingFormProps) {
   const { toast } = useToast();
-  const { currentUser } = useAuth(); // Get current user
+  const { currentUser } = useAuth(); 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -119,9 +119,9 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
       meetingLocation: `Viewing for ${property.name} at ${property.address}`,
       meetingDate: new Date(),
       meetingTime: "10:00",
-      userName: currentUser?.displayName || currentUser?.email?.split('@')[0] || '', // Pre-fill if user logged in
-      userPhone: '', // Could be pre-filled from user profile if available
-      userEmail: currentUser?.email || '', // Pre-fill if user logged in
+      userName: currentUser?.displayName || currentUser?.email?.split('@')[0] || '', 
+      userPhone: '', 
+      userEmail: currentUser?.email || '', 
       paymentMethod: 'creditCard',
       cardNumber: '',
       cardExpiry: '',
@@ -154,7 +154,6 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
   }, [currentAppointmentDetails]);
 
   React.useEffect(() => {
-    // Pre-fill user details if currentUser changes (e.g., after modal opens and auth state loads)
     if (currentUser) {
       form.setValue('userName', currentUser.displayName || currentUser.email?.split('@')[0] || '');
       form.setValue('userEmail', currentUser.email || '');
@@ -164,20 +163,20 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
 
   async function onSubmit(data: BookingFormValues) {
     try {
-      const meetingDateTime = new Date(data.meetingDate);
+      const meetingDateTimeCombined = new Date(data.meetingDate);
       const [hours, minutes] = data.meetingTime.split(':').map(Number);
-      meetingDateTime.setHours(hours, minutes);
+      meetingDateTimeCombined.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0 for consistency
 
       const appointmentPrice = appointmentTypeDetailsMap[data.appointmentType as AppointmentType]?.price ?? 0;
 
       const bookingId = await submitBookingRequest({
         propertyId: property.id,
         propertyName: data.propertyName,
-        userId: currentUser?.uid, // Add userId
+        userId: currentUser?.uid, 
         appointmentType: data.appointmentType as AppointmentType,
         appointmentPrice: appointmentPrice,
-        meetingTime: meetingDateTime.toISOString(),
-        meetingLocation: data.meetingLocation || 'N/A',
+        meetingTime: meetingDateTimeCombined.toISOString(),
+        meetingLocation: data.meetingLocation || (data.appointmentType === 'physical-viewing' ? property.address : 'N/A (Virtual/Phone)'),
         userName: data.userName,
         userPhone: data.userPhone,
         userEmail: data.userEmail,
@@ -187,9 +186,39 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
         cardCVC: appointmentPrice > 0 && data.paymentMethod === 'creditCard' ? data.cardCVC : undefined,
         mobileMoneyNumber: appointmentPrice > 0 && data.paymentMethod === 'mobileMoney' ? data.mobileMoneyNumber : undefined,
       });
+
+      // Google Calendar Link Generation
+      const eventTitle = encodeURIComponent(`Booking: ${property.name}`);
+      const eventStartTime = parseISO(meetingDateTimeCombined.toISOString());
+      const eventEndTime = addHours(eventStartTime, 1); // Assume 1 hour duration
+      
+      const formatForGoogleCalendar = (date: Date) => format(date, "yyyyMMdd'T'HHmmss'Z'");
+      const googleStartTime = formatForGoogleCalendar(eventStartTime);
+      const googleEndTime = formatForGoogleCalendar(eventEndTime);
+
+      const eventLocation = encodeURIComponent(data.meetingLocation || (data.appointmentType === 'physical-viewing' ? property.address : 'Virtual/Phone'));
+      const eventDetails = encodeURIComponent(
+        `Appointment for ${property.name}.\nType: ${appointmentTypeDetailsMap[data.appointmentType as AppointmentType].label}\nAgent: ${property.agent.name} (${property.agent.phone})`
+      );
+      
+      const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${googleStartTime}/${googleEndTime}&details=${eventDetails}&location=${eventLocation}`;
+
       toast({
         title: 'Booking Request Sent!',
-        description: `Your request (ID: ${bookingId}) for ${data.propertyName} has been submitted. We'll contact you soon.`,
+        description: (
+          <div>
+            Your request (ID: {bookingId}) for {data.propertyName} has been submitted. We'll contact you soon.
+            <a
+              href={googleCalendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 mt-2 w-full sm:w-auto"
+            >
+              <CalendarPlus className="mr-2 h-4 w-4" /> Add to Google Calendar
+            </a>
+          </div>
+        ),
+        duration: 15000, // Keep toast longer as it has an action
       });
       form.reset();
       if (onSuccess) onSuccess();
@@ -225,7 +254,14 @@ export function BookingForm({ property, onSuccess }: BookingFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Appointment Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                field.onChange(value);
+                if (value !== 'physical-viewing') {
+                  form.setValue('meetingLocation', ''); // Clear meeting location if not physical
+                } else {
+                  form.setValue('meetingLocation', `Viewing for ${property.name} at ${property.address}`);
+                }
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="h-10">
                     <div className="flex items-center">
