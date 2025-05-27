@@ -12,16 +12,16 @@ export function Logo({ className }: LogoProps) {
       <Image
         // Replace this src with the path to your actual logo in the /public directory
         // e.g., if your logo is at public/logo.png, use src="/logo.png"
-        src="https://placehold.co/180x50.png?text=Crown+Homes" 
+        src="https://placehold.co/140x40.png" // Placeholder for user's image logo
         alt="Crown Homes Logo"
         width={140} // Adjust width as needed
         height={40} // Adjust height as needed
         className="rounded-md" // Added rounded borders
         data-ai-hint="company logo" // Hint for AI or future replacement
       />
-      {/* The text "Crown Homes" might be redundant if it's part of your logo image. 
-          You can remove the span below if your logo image already contains the name. 
-          For now, I'll keep it as per the previous structure. */}
+      {/* The text "Crown Homes" might be redundant if it's part of your logo image.
+          You can remove the span below if your logo image already contains the name.
+      */}
       {/* <span>Crown Homes</span> */}
     </Link>
   );
